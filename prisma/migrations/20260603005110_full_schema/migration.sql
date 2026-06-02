@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
 CREATE TYPE "Status" AS ENUM ('ACTIVE', 'INACTIVE');
 
@@ -8,7 +11,16 @@ CREATE TYPE "Role" AS ENUM ('ADMIN', 'SUPER_ADMIN');
 CREATE TYPE "OrganizationType" AS ENUM ('PARTNER', 'CLIENT', 'VENDOR');
 
 -- CreateEnum
-CREATE TYPE "CareerType" AS ENUM ('FULL_TIME', 'PART_TIME', 'INTERNSHIP', 'CONTRACT');
+CREATE TYPE "CareerType" AS ENUM ('FULL_TIME', 'PART_TIME', 'CONTRACT', 'REMOTE');
+
+-- CreateEnum
+CREATE TYPE "ContactSubject" AS ENUM ('GENERAL_INQUIRY', 'PRODUCT_QUOTE', 'PARTNERSHIP', 'TECHNICAL_SUPPORT', 'CAREER_OPPORTUNITY', 'COFFEE_EXPORT', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "ContactStatus" AS ENUM ('NEW', 'READ', 'RESPONDED');
+
+-- CreateEnum
+CREATE TYPE "ApplicationStatus" AS ENUM ('NEW', 'REVIEWED', 'ACCEPTED', 'REJECTED');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -29,6 +41,7 @@ CREATE TABLE "ProductCategory" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
+    "description" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -41,7 +54,7 @@ CREATE TABLE "Product" (
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "description" TEXT,
-    "price" DECIMAL(65,30) NOT NULL,
+    "status" "Status" NOT NULL DEFAULT 'ACTIVE',
     "categoryId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -64,6 +77,7 @@ CREATE TABLE "ProjectCategory" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
+    "description" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -73,9 +87,10 @@ CREATE TABLE "ProjectCategory" (
 -- CreateTable
 CREATE TABLE "Project" (
     "id" SERIAL NOT NULL,
-    "name" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "description" TEXT,
+    "status" "Status" NOT NULL DEFAULT 'ACTIVE',
     "categoryId" INTEGER NOT NULL,
     "clientId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -148,10 +163,26 @@ CREATE TABLE "Career" (
     "requirements" TEXT,
     "location" TEXT,
     "salary" TEXT,
+    "status" "Status" NOT NULL DEFAULT 'ACTIVE',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Career_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Application" (
+    "id" SERIAL NOT NULL,
+    "fullName" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "phoneNumber" TEXT,
+    "cvUrl" TEXT NOT NULL,
+    "coverLetter" TEXT,
+    "status" "ApplicationStatus" NOT NULL DEFAULT 'NEW',
+    "careerId" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Application_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -175,6 +206,7 @@ CREATE TABLE "BlogCategory" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
+    "description" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -213,8 +245,11 @@ CREATE TABLE "CoffeeType" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
+    "origin" TEXT NOT NULL,
+    "grade" TEXT NOT NULL,
     "description" TEXT,
     "imageUrl" TEXT,
+    "status" "Status" NOT NULL DEFAULT 'ACTIVE',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -225,13 +260,11 @@ CREATE TABLE "CoffeeType" (
 CREATE TABLE "Testimonial" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
-    "content" TEXT NOT NULL,
-    "position" TEXT,
-    "company" TEXT,
-    "imageUrl" TEXT,
-    "rating" INTEGER,
+    "company" TEXT NOT NULL,
+    "message" TEXT NOT NULL,
+    "rating" INTEGER NOT NULL,
+    "status" "Status" NOT NULL DEFAULT 'ACTIVE',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Testimonial_pkey" PRIMARY KEY ("id")
 );
@@ -239,14 +272,15 @@ CREATE TABLE "Testimonial" (
 -- CreateTable
 CREATE TABLE "ContactMessage" (
     "id" SERIAL NOT NULL,
-    "name" TEXT NOT NULL,
+    "fullName" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "subject" TEXT,
+    "subject" "ContactSubject" NOT NULL,
     "message" TEXT NOT NULL,
-    "phone" TEXT,
+    "phoneNumber" TEXT,
+    "companyName" TEXT,
     "isRead" BOOLEAN NOT NULL DEFAULT false,
+    "status" "ContactStatus" NOT NULL DEFAULT 'NEW',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "ContactMessage_pkey" PRIMARY KEY ("id")
 );
@@ -307,6 +341,9 @@ ALTER TABLE "TeamMember" ADD CONSTRAINT "TeamMember_departmentId_fkey" FOREIGN K
 
 -- AddForeignKey
 ALTER TABLE "Career" ADD CONSTRAINT "Career_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "Department"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Application" ADD CONSTRAINT "Application_careerId_fkey" FOREIGN KEY ("careerId") REFERENCES "Career"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "BlogPostCategory" ADD CONSTRAINT "BlogPostCategory_blogPostId_fkey" FOREIGN KEY ("blogPostId") REFERENCES "BlogPost"("id") ON DELETE CASCADE ON UPDATE CASCADE;
