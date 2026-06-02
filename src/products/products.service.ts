@@ -4,6 +4,8 @@ import * as path from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { QueryProductsDto } from './dto/query-products.dto';
+import { paginate, PaginatedResult } from '../common/interfaces/paginated-result.interface';
 import { Status } from '../../generated/prisma/client';
 
 @Injectable()
@@ -63,18 +65,25 @@ export class ProductsService {
     return this.findOne(product.id);
   }
 
-  async findAll() {
-    const products = await this.prisma.product.findMany({
-      include: { category: true, images: true },
-      orderBy: { createdAt: 'desc' },
-    });
-    return products.map((p) => ({
-      ...p,
-      images: p.images.map((img) => ({
-        ...img,
-        imageUrl: img.imageUrl,
-      })),
-    }));
+  async findAll(query: QueryProductsDto): Promise<PaginatedResult<any>> {
+    const { page = 1, limit = 10, sort = 'newest', categoryId, status, search } = query;
+    const where: Record<string, unknown> = {};
+    if (categoryId) where.categoryId = categoryId;
+    if (status) where.status = status;
+    if (search) where.name = { contains: search, mode: 'insensitive' };
+
+    const orderBy: Record<string, string> = sort === 'oldest' ? { createdAt: 'asc' } : { createdAt: 'desc' };
+    const [products, total] = await Promise.all([
+      this.prisma.product.findMany({
+        where,
+        include: { category: true, images: true },
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+    return paginate(products, total, page, limit);
   }
 
   async findOne(id: number) {

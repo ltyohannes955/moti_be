@@ -5,6 +5,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateCareerDto } from './dto/create-career.dto';
 import { UpdateCareerDto } from './dto/update-career.dto';
 import { ApplyCareerDto } from './dto/apply-career.dto';
+import { QueryCareersDto } from './dto/query-careers.dto';
+import { QueryApplicationsDto } from './dto/query-applications.dto';
+import { paginate, PaginatedResult } from '../common/interfaces/paginated-result.interface';
 import { Status } from '../../generated/prisma/client';
 
 @Injectable()
@@ -31,11 +34,19 @@ export class CareersService {
     });
   }
 
-  async findAll() {
-    return this.prisma.career.findMany({
-      include: { department: true, _count: { select: { applications: true } } },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(query: QueryCareersDto): Promise<PaginatedResult<any>> {
+    const { page = 1, limit = 10, sort = 'newest', type, departmentId, status } = query;
+    const where: Record<string, unknown> = {};
+    if (type) where.type = type;
+    if (departmentId) where.departmentId = departmentId;
+    if (status) where.status = status;
+    const orderBy: Record<string, string> = sort === 'oldest' ? { createdAt: 'asc' } : { createdAt: 'desc' };
+    const include = { department: true, _count: { select: { applications: true } } };
+    const [data, total] = await Promise.all([
+      this.prisma.career.findMany({ where, include, orderBy, skip: (page - 1) * limit, take: limit }),
+      this.prisma.career.count({ where }),
+    ]);
+    return paginate(data, total, page, limit);
   }
 
   async findOne(id: number) {
@@ -84,11 +95,17 @@ export class CareersService {
     });
   }
 
-  async findApplications(careerId?: number) {
-    const where = careerId ? { careerId } : {};
-    return this.prisma.application.findMany({
-      where, include: { career: true },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findApplications(query: QueryApplicationsDto & { careerId?: number }) {
+    const { page = 1, limit = 10, sort = 'newest', status, careerId } = query;
+    const where: Record<string, unknown> = {};
+    if (careerId) where.careerId = careerId;
+    if (status) where.status = status;
+    const orderBy: Record<string, string> = sort === 'oldest' ? { createdAt: 'asc' } : { createdAt: 'desc' };
+    const include = { career: true };
+    const [data, total] = await Promise.all([
+      this.prisma.application.findMany({ where, include, orderBy, skip: (page - 1) * limit, take: limit }),
+      this.prisma.application.count({ where }),
+    ]);
+    return paginate(data, total, page, limit);
   }
 }

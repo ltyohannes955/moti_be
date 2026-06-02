@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { BlogCategoriesService } from './blog-categories.service';
 import { CreateBlogCategoryDto } from './dto/create-blog-category.dto';
 import { UpdateBlogCategoryDto } from './dto/update-blog-category.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Public } from '../auth/decorators/public.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
 import { Role } from '../../generated/prisma/client';
 
 @Controller('blog-categories')
@@ -13,7 +14,7 @@ export class BlogCategoriesController {
 
   @Public()
   @Get()
-  findAll() { return this.service.findAll(); }
+  findAll(@Query() query: PaginationQueryDto) { return this.service.findAll(query); }
 
   @Public()
   @Get(':id')

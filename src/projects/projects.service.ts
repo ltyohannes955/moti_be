@@ -4,6 +4,8 @@ import * as path from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { QueryProjectsDto } from './dto/query-projects.dto';
+import { paginate, PaginatedResult } from '../common/interfaces/paginated-result.interface';
 import { Status } from '../../generated/prisma/client';
 
 @Injectable()
@@ -61,11 +63,22 @@ export class ProjectsService {
     return this.findOne(project.id);
   }
 
-  async findAll() {
-    return this.prisma.project.findMany({
-      include: { category: true, client: true, images: true },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(query: QueryProjectsDto): Promise<PaginatedResult<any>> {
+    const { page = 1, limit = 10, sort = 'newest', categoryId, clientId, status } = query;
+    const where: Record<string, unknown> = {};
+    if (categoryId) where.categoryId = categoryId;
+    if (clientId) where.clientId = clientId;
+    if (status) where.status = status;
+
+    const orderBy: Record<string, string> = sort === 'oldest' ? { createdAt: 'asc' } : { createdAt: 'desc' };
+    const [data, total] = await Promise.all([
+      this.prisma.project.findMany({
+        where, include: { category: true, client: true, images: true }, orderBy,
+        skip: (page - 1) * limit, take: limit,
+      }),
+      this.prisma.project.count({ where }),
+    ]);
+    return paginate(data, total, page, limit);
   }
 
   async findOne(id: number) {

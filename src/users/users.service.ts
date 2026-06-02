@@ -3,6 +3,8 @@ import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { QueryUsersDto } from './dto/query-users.dto';
+import { paginate, PaginatedResult } from '../common/interfaces/paginated-result.interface';
 import { Role, Status } from '../../generated/prisma/client';
 
 @Injectable()
@@ -30,9 +32,17 @@ export class UsersService {
     return result;
   }
 
-  async findAll() {
-    const users = await this.prisma.user.findMany();
-    return users.map(({ password: _, ...rest }) => rest);
+  async findAll(query: QueryUsersDto): Promise<PaginatedResult<any>> {
+    const { page = 1, limit = 10, sort = 'newest', role, status } = query;
+    const where: Record<string, unknown> = {};
+    if (role) where.role = role;
+    if (status) where.status = status;
+    const orderBy: Record<string, string> = sort === 'oldest' ? { createdAt: 'asc' } : { createdAt: 'desc' };
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({ where, orderBy, skip: (page - 1) * limit, take: limit }),
+      this.prisma.user.count({ where }),
+    ]);
+    return paginate(users.map(({ password: _, ...rest }) => rest), total, page, limit);
   }
 
   async findByEmail(email: string) {

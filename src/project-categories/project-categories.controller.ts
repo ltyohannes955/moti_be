@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { ProjectCategoriesService } from './project-categories.service';
 import { CreateProjectCategoryDto } from './dto/create-project-category.dto';
 import { UpdateProjectCategoryDto } from './dto/update-project-category.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Public } from '../auth/decorators/public.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
 import { Role } from '../../generated/prisma/client';
 
 @Controller('project-categories')
@@ -13,7 +14,7 @@ export class ProjectCategoriesController {
 
   @Public()
   @Get()
-  findAll() { return this.service.findAll(); }
+  findAll(@Query() query: PaginationQueryDto) { return this.service.findAll(query); }
 
   @Public()
   @Get(':id')

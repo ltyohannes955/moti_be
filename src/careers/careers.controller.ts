@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe, Query,
+  Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe,
   UseGuards, UseInterceptors, UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -9,6 +9,8 @@ import { CareersService } from './careers.service';
 import { CreateCareerDto } from './dto/create-career.dto';
 import { UpdateCareerDto } from './dto/update-career.dto';
 import { ApplyCareerDto } from './dto/apply-career.dto';
+import { QueryCareersDto } from './dto/query-careers.dto';
+import { QueryApplicationsDto } from './dto/query-applications.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Public } from '../auth/decorators/public.decorator';
@@ -37,20 +39,20 @@ export class CareersController {
 
   @Public()
   @Get()
-  findAll() { return this.service.findAll(); }
+  findAll(@Query() query: QueryCareersDto) { return this.service.findAll(query); }
 
   @Get(':id/applications')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @UseGuards(RolesGuard)
-  findCareerApplications(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findApplications(id);
+  findCareerApplications(@Param('id', ParseIntPipe) id: number, @Query() query: QueryApplicationsDto) {
+    return this.service.findApplications({ ...query, careerId: id });
   }
 
   @Get('applications')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @UseGuards(RolesGuard)
-  findApplications(@Query('careerId') careerId?: string) {
-    return this.service.findApplications(careerId ? parseInt(careerId, 10) : undefined);
+  findApplications(@Query() query: QueryApplicationsDto) {
+    return this.service.findApplications(query);
   }
 
   @Public()

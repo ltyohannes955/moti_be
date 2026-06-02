@@ -1,15 +1,6 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Body,
-  Param,
-  ParseIntPipe,
-  UseGuards,
-  UseInterceptors,
-  UploadedFiles,
+  Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe,
+  UseGuards, UseInterceptors, UploadedFiles,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -17,6 +8,7 @@ import { extname, join } from 'path';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { QueryProductsDto } from './dto/query-products.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Public } from '../auth/decorators/public.decorator';
@@ -28,8 +20,8 @@ export class ProductsController {
 
   @Public()
   @Get()
-  findAll() {
-    return this.service.findAll();
+  findAll(@Query() query: QueryProductsDto) {
+    return this.service.findAll(query);
   }
 
   @Public()

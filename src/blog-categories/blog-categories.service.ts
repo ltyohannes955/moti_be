@@ -2,6 +2,8 @@ import { Injectable, ConflictException, NotFoundException } from '@nestjs/common
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBlogCategoryDto } from './dto/create-blog-category.dto';
 import { UpdateBlogCategoryDto } from './dto/update-blog-category.dto';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
+import { paginate, PaginatedResult } from '../common/interfaces/paginated-result.interface';
 
 @Injectable()
 export class BlogCategoriesService {
@@ -20,11 +22,17 @@ export class BlogCategoriesService {
     });
   }
 
-  async findAll() {
-    return this.prisma.blogCategory.findMany({
-      include: { _count: { select: { posts: true } } },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(query: PaginationQueryDto): Promise<PaginatedResult<any>> {
+    const { page = 1, limit = 10, sort = 'newest' } = query;
+    const orderBy: Record<string, string> = sort === 'oldest' ? { createdAt: 'asc' } : { createdAt: 'desc' };
+    const [data, total] = await Promise.all([
+      this.prisma.blogCategory.findMany({
+        include: { _count: { select: { posts: true } } }, orderBy,
+        skip: (page - 1) * limit, take: limit,
+      }),
+      this.prisma.blogCategory.count(),
+    ]);
+    return paginate(data, total, page, limit);
   }
 
   async findOne(id: number) {

@@ -252,8 +252,11 @@ model CoffeeType {
   id          Int      @id @default(autoincrement())
   name        String
   slug        String   @unique
+  origin      String
+  grade       String
   description String?
   imageUrl    String?
+  status      Status   @default(ACTIVE)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -261,13 +264,11 @@ model CoffeeType {
 model Testimonial {
   id        Int      @id @default(autoincrement())
   name      String
-  content   String
-  position  String?
-  company   String?
-  imageUrl  String?
-  rating    Int?
+  company   String
+  message   String
+  rating    Int
+  status    Status   @default(ACTIVE)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model ContactMessage {

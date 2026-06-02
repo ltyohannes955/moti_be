@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Patch, Delete, Body, Param, ParseIntPipe,
+  Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe,
   UseGuards, UseInterceptors, UploadedFiles,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -8,6 +8,7 @@ import { extname, join } from 'path';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { QueryProjectsDto } from './dto/query-projects.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Public } from '../auth/decorators/public.decorator';
@@ -35,7 +36,7 @@ export class ProjectsController {
 
   @Public()
   @Get()
-  findAll() { return this.service.findAll(); }
+  findAll(@Query() query: QueryProjectsDto) { return this.service.findAll(query); }
 
   @Public()
   @Get(':id')

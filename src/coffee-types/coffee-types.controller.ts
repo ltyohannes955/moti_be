@@ -5,10 +5,10 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
-import { BlogPostsService } from './blog-posts.service';
-import { CreateBlogPostDto } from './dto/create-blog-post.dto';
-import { UpdateBlogPostDto } from './dto/update-blog-post.dto';
-import { QueryBlogPostsDto } from './dto/query-blog-posts.dto';
+import { CoffeeTypesService } from './coffee-types.service';
+import { CreateCoffeeTypeDto } from './dto/create-coffee-type.dto';
+import { UpdateCoffeeTypeDto } from './dto/update-coffee-type.dto';
+import { QueryCoffeeTypesDto } from './dto/query-coffee-types.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Public } from '../auth/decorators/public.decorator';
@@ -16,7 +16,7 @@ import { Role } from '../../generated/prisma/client';
 
 const multerOptions = {
   storage: diskStorage({
-    destination: join(process.cwd(), 'uploads', 'blog-posts'),
+    destination: join(process.cwd(), 'uploads', 'coffee-types'),
     filename: (_req, file, cb) => {
       const unique = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
       cb(null, `${unique}${extname(file.originalname)}`);
@@ -30,13 +30,13 @@ const multerOptions = {
   },
 };
 
-@Controller('blog-posts')
-export class BlogPostsController {
-  constructor(private service: BlogPostsService) {}
+@Controller('coffee-types')
+export class CoffeeTypesController {
+  constructor(private service: CoffeeTypesService) {}
 
   @Public()
   @Get()
-  findAll(@Query() query: QueryBlogPostsDto) { return this.service.findAll(query); }
+  findActive(@Query() query: QueryCoffeeTypesDto) { return this.service.findAllActive(query); }
 
   @Public()
   @Get(':id')
@@ -46,7 +46,7 @@ export class BlogPostsController {
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @UseGuards(RolesGuard)
   @UseInterceptors(FileInterceptor('image', multerOptions))
-  create(@Body() dto: CreateBlogPostDto, @UploadedFile() file?: Express.Multer.File) {
+  create(@Body() dto: CreateCoffeeTypeDto, @UploadedFile() file?: Express.Multer.File) {
     return this.service.create(dto, file);
   }
 
@@ -56,7 +56,7 @@ export class BlogPostsController {
   @UseInterceptors(FileInterceptor('image', multerOptions))
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateBlogPostDto,
+    @Body() dto: UpdateCoffeeTypeDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
     return this.service.update(id, dto, file);

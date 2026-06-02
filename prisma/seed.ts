@@ -372,6 +372,58 @@ async function main() {
     console.log('  CREATED:', msg.fullName, '-', msg.subject);
   }
 
+  console.log('\n--- Seeding Testimonials ---');
+  const testimonials = [
+    { name: 'Dr. Yinager Dessie', company: 'National Bank of Ethiopia', message: 'Moti Technologies has been instrumental in modernizing our digital banking infrastructure. Their solutions are robust, secure, and tailored for the Ethiopian market.', rating: 5 },
+    { name: 'Asfaw Alemu', company: 'Dashen Bank', message: 'The ERP and mobile banking platforms delivered by Moti exceeded our expectations. Customer adoption has been remarkable and transaction volumes have tripled.', rating: 5 },
+    { name: 'Frehiwot Tamiru', company: 'Ethio Telecom', message: 'Working with Moti on our digital payment integrations was seamless. Their team understands the local ecosystem and delivers on time.', rating: 4 },
+    { name: 'Henok Abebe', company: 'Kifiya Financial Technology', message: 'Moti\'s API gateway solution transformed how we connect with banks and mobile money providers. Highly recommended for fintech partnerships.', rating: 5 },
+    { name: 'Meseret Tadesse', company: 'Awash Bank', message: 'The cloud migration was handled professionally with zero downtime. Our infrastructure costs have decreased by 40% since the migration.', rating: 4 },
+    { name: 'Tewodros Belay', company: 'Ethiopian Airlines', message: 'The booking engine revamp was a game changer for our digital strategy. Moti delivered a world-class product that handles millions of queries monthly.', rating: 5 },
+  ];
+
+  for (const t of testimonials) {
+    const existing = await prisma.testimonial.findFirst({
+      where: { name: t.name, company: t.company },
+    });
+    if (existing) {
+      console.log('  EXISTS:', t.name, '-', t.company);
+      continue;
+    }
+    await prisma.testimonial.create({ data: { ...t, status: 'ACTIVE' } });
+    console.log('  CREATED:', t.name, '-', t.company);
+  }
+
+  console.log('\n--- Seeding Coffee Types ---');
+  const coffeeTypes = [
+    { name: 'Yirgacheffe Premium', origin: 'Yirgacheffe, Gedeo Zone', grade: 'Grade 1', description: 'Bright acidity with floral and citrus notes. Washed processing produces a clean, complex cup with jasmine aroma and lemon zest finish.' },
+    { name: 'Sidamo Single Origin', origin: 'Sidamo, Southern Nations', grade: 'Grade 2', description: 'Medium-bodied with wine-like acidity. Notes of blueberry, dark chocolate, and spice. Sundried natural processing for rich berry flavors.' },
+    { name: 'Harrar Wild', origin: 'Harrar, Eastern Ethiopia', grade: 'Grade 1', description: 'Full-bodied with intense blueberry and mocha notes. Dry-processed under the Ethiopian sun for a bold, fruity cup with low acidity.' },
+    { name: 'Limu Washed', origin: 'Limu, Oromia Region', grade: 'Grade 2', description: 'Well-balanced with medium body and winy acidity. Floral aroma with hints of spice and cocoa. Perfect for espresso blends.' },
+    { name: 'Jimma Forest', origin: 'Jimma, Oromia Region', grade: 'Grade 3', description: 'Earthy and full-bodied with low acidity. Notes of dark chocolate and tobacco. Excellent base for traditional Ethiopian coffee ceremony blends.' },
+    { name: 'Lekempti Bold', origin: 'Lekempti, Wollega', grade: 'Grade 2', description: 'Smooth with medium acidity and fruity undertones. Notes of stone fruit and caramel. Grown at altitudes of 1,500-1,800 meters.' },
+    { name: 'Bebeka Estate', origin: 'Bebeka, Bench Maji', grade: 'Grade 1', description: 'One of Ethiopia\'s largest coffee plantations. Light-bodied with delicate floral notes and honey sweetness. Rainforest Alliance certified.' },
+    { name: 'Tepi Plantation', origin: 'Tepi, Sheka Zone', grade: 'Grade 2', description: 'Medium-bodied with balanced acidity and clean finish. Notes of milk chocolate and roasted nuts. Shade-grown under native forest canopy.' },
+  ];
+
+  for (const ct of coffeeTypes) {
+    const slug = ct.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const existing = await prisma.coffeeType.findUnique({ where: { slug } });
+    if (existing) {
+      console.log('  EXISTS:', ct.name);
+      continue;
+    }
+    const encoded = encodeURIComponent(ct.name);
+    await prisma.coffeeType.create({
+      data: {
+        name: ct.name, slug, origin: ct.origin, grade: ct.grade,
+        description: ct.description, status: 'ACTIVE',
+        imageUrl: `https://placehold.co/600x400/4E342E/white?text=${encoded}`,
+      },
+    });
+    console.log('  CREATED:', ct.name);
+  }
+
   console.log('\n--- Seed Complete ---');
   await prisma.$disconnect();
 }

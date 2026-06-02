@@ -2,8 +2,10 @@ import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
+import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { AdminModule } from './admin/admin.module';
 import { ProductCategoriesModule } from './product-categories/product-categories.module';
 import { ProductsModule } from './products/products.module';
 import { ProjectCategoriesModule } from './project-categories/project-categories.module';
@@ -13,6 +15,8 @@ import { BlogCategoriesModule } from './blog-categories/blog-categories.module';
 import { BlogTagsModule } from './blog-tags/blog-tags.module';
 import { ContactMessagesModule } from './contact-messages/contact-messages.module';
 import { CareersModule } from './careers/careers.module';
+import { TestimonialsModule } from './testimonials/testimonials.module';
+import { CoffeeTypesModule } from './coffee-types/coffee-types.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -24,8 +28,10 @@ import { AppService } from './app.service';
       envFilePath: '.env',
     }),
     PrismaModule,
+    CommonModule,
     AuthModule,
     UsersModule,
+    AdminModule,
     ProductCategoriesModule,
     ProductsModule,
     ProjectCategoriesModule,
@@ -35,6 +41,8 @@ import { AppService } from './app.service';
     BlogTagsModule,
     ContactMessagesModule,
     CareersModule,
+    TestimonialsModule,
+    CoffeeTypesModule,
   ],
   controllers: [AppController],
   providers: [

@@ -4,6 +4,8 @@ import * as path from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBlogPostDto } from './dto/create-blog-post.dto';
 import { UpdateBlogPostDto } from './dto/update-blog-post.dto';
+import { QueryBlogPostsDto } from './dto/query-blog-posts.dto';
+import { paginate, PaginatedResult } from '../common/interfaces/paginated-result.interface';
 import { Status } from '../../generated/prisma/client';
 
 @Injectable()
@@ -62,14 +64,26 @@ export class BlogPostsService {
     return this.findOne(post.id);
   }
 
-  async findAll() {
-    return this.prisma.blogPost.findMany({
-      include: {
-        categories: { include: { category: true } },
-        tags: { include: { tag: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(query: QueryBlogPostsDto): Promise<PaginatedResult<any>> {
+    const { page = 1, limit = 10, sort = 'newest', categoryId, tagId, status, search } = query;
+    const where: Record<string, unknown> = {};
+    if (status) where.status = status;
+    if (categoryId) where.categories = { some: { categoryId } };
+    if (tagId) where.tags = { some: { tagId } };
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { excerpt: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const orderBy: Record<string, string> = sort === 'oldest' ? { createdAt: 'asc' } : { createdAt: 'desc' };
+    const include = { categories: { include: { category: true } }, tags: { include: { tag: true } } };
+    const [data, total] = await Promise.all([
+      this.prisma.blogPost.findMany({ where, include, orderBy, skip: (page - 1) * limit, take: limit }),
+      this.prisma.blogPost.count({ where }),
+    ]);
+    return paginate(data, total, page, limit);
   }
 
   async findOne(id: number) {
