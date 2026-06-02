@@ -42,12 +42,13 @@ model User {
 }
 
 model ProductCategory {
-  id        Int       @id @default(autoincrement())
-  name      String
-  slug      String    @unique
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Product {
@@ -55,7 +56,7 @@ model Product {
   name        String
   slug        String           @unique
   description String?
-  price       Decimal
+  status      Status           @default(ACTIVE)
   categoryId  Int
   category    ProductCategory  @relation(fields: [categoryId], references: [id])
   images      ProductImage[]
@@ -72,19 +73,21 @@ model ProductImage {
 }
 
 model ProjectCategory {
-  id        Int       @id @default(autoincrement())
-  name      String
-  slug      String    @unique
-  projects  Project[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  description String?
+  projects    Project[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Project {
   id          Int              @id @default(autoincrement())
-  name        String
+  title       String
   slug        String           @unique
   description String?
+  status      Status           @default(ACTIVE)
   categoryId  Int
   category    ProjectCategory  @relation(fields: [categoryId], references: [id])
   clientId    Int
