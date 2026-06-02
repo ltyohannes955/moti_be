@@ -180,6 +180,198 @@ async function main() {
     console.log('  CREATED:', proj.title);
   }
 
+  console.log('\n--- Seeding Blog Categories ---');
+  const blogCategories = [
+    { name: 'Fintech', slug: 'fintech', description: 'Financial technology innovations shaping Ethiopia\'s banking landscape' },
+    { name: 'Digital Banking', slug: 'digital-banking', description: 'Mobile banking, agent banking, and digital financial services' },
+    { name: 'Startup Ecosystem', slug: 'startup-ecosystem', description: 'Ethiopian startup news, funding rounds, and ecosystem growth' },
+    { name: 'Mobile Money', slug: 'mobile-money', description: 'Telebirr, CBE Birr, and the evolution of mobile wallets in Ethiopia' },
+    { name: 'Tech Policy', slug: 'tech-policy', description: 'Regulatory updates, NBE directives, and digital policy in Ethiopia' },
+  ];
+
+  const blogCatMap = new Map();
+  for (const cat of blogCategories) {
+    const existing = await prisma.blogCategory.findUnique({ where: { slug: cat.slug } });
+    if (existing) {
+      blogCatMap.set(cat.slug, existing);
+      console.log('  EXISTS:', cat.name);
+    } else {
+      const created = await prisma.blogCategory.create({ data: cat });
+      blogCatMap.set(cat.slug, created);
+      console.log('  CREATED:', cat.name);
+    }
+  }
+
+  console.log('\n--- Seeding Blog Tags ---');
+  const blogTags = [
+    { name: 'Telebirr', slug: 'telebirr' },
+    { name: 'CBE Birr', slug: 'cbe-birr' },
+    { name: 'Digital Ethiopia', slug: 'digital-ethiopia' },
+    { name: 'Innovation', slug: 'innovation' },
+    { name: 'Mobile Banking', slug: 'mobile-banking' },
+    { name: 'Financial Inclusion', slug: 'financial-inclusion' },
+    { name: 'API', slug: 'api' },
+    { name: 'Cyber Security', slug: 'cyber-security' },
+    { name: 'Cloud Computing', slug: 'cloud-computing' },
+    { name: 'AI/ML', slug: 'ai-ml' },
+  ];
+
+  const tagMap = new Map();
+  for (const tag of blogTags) {
+    const existing = await prisma.blogTag.findUnique({ where: { slug: tag.slug } });
+    if (existing) {
+      tagMap.set(tag.slug, existing);
+      console.log('  EXISTS:', tag.name);
+    } else {
+      const created = await prisma.blogTag.create({ data: tag });
+      tagMap.set(tag.slug, created);
+      console.log('  CREATED:', tag.name);
+    }
+  }
+
+  console.log('\n--- Seeding Blog Posts ---');
+  const blogPosts = [
+    { title: 'How Telebirr is Transforming Digital Payments in Ethiopia', excerpt: 'A deep dive into Ethio Telecom\'s mobile money platform and its impact on financial inclusion across the country.', content: 'Since its launch, Telebirr has revolutionized how Ethiopians handle money. With millions of active users, the platform enables bill payments, merchant transactions, and peer-to-peer transfers without requiring a traditional bank account. This article explores the technology behind Telebirr, its integration with banks, and what the future holds for mobile money in Ethiopia.', categorySlugs: ['fintech', 'mobile-money'], tagSlugs: ['telebirr', 'digital-ethiopia', 'mobile-banking'], imgColor: '1B5E20' },
+    { title: 'CBE Birr vs Telebirr: Ethiopia\'s Mobile Money Showdown', excerpt: 'Comparing the two largest mobile money platforms in Ethiopia — features, reach, and user experience.', content: 'With the National Bank of Ethiopia opening up mobile money licensing, competition is heating up. CBE Birr, backed by the Commercial Bank of Ethiopia, and Telebirr, powered by Ethio Telecom, are the two dominant players. We compare their APIs, agent networks, transaction limits, and interoperability plans to help developers choose the right integration partner.', categorySlugs: ['mobile-money', 'digital-banking'], tagSlugs: ['cbe-birr', 'telebirr', 'financial-inclusion'], imgColor: '1565C0' },
+    { title: 'Building Scalable Fintech APIs for the Ethiopian Market', excerpt: 'Best practices for designing APIs that handle intermittent connectivity, Amharic text, and local payment methods.', content: 'Developing for the Ethiopian market presents unique challenges: inconsistent internet connectivity, USSD fallback requirements, Amharic character support, and integration with local payment providers. This guide covers RESTful API design patterns, offline-first architecture, local hosting considerations, and compliance with NBE regulations for fintech products.', categorySlugs: ['fintech', 'tech-policy'], tagSlugs: ['api', 'innovation', 'digital-ethiopia'], imgColor: 'E65100' },
+    { title: 'The Rise of Ethiopian Tech Startups in 2024', excerpt: 'A roundup of the most promising startups, funding rounds, and incubator programs emerging from Ethiopia.', content: 'Ethiopia\'s startup ecosystem is experiencing unprecedented growth. With the government\'s digital transformation strategy, new VC funds, and increasing internet penetration, entrepreneurs are launching ventures in agritech, healthtech, edtech, and fintech. We profile 10 startups to watch, the challenges they face, and the opportunities ahead for the Ethiopian tech scene.', categorySlugs: ['startup-ecosystem'], tagSlugs: ['innovation', 'digital-ethiopia'], imgColor: '6A1B9A' },
+    { title: 'Cloud Computing Adoption in Ethiopian Financial Institutions', excerpt: 'How banks and fintechs are migrating from on-premise to cloud infrastructure while navigating regulatory requirements.', content: 'Ethiopian banks have traditionally relied on on-premise data centers, but the shift to cloud is accelerating. With Ethio Telecom\'s improved bandwidth, AWS\'s growing presence in Africa, and the NBE\'s cloud computing guidelines, financial institutions are now evaluating hybrid and multi-cloud strategies. We explore the benefits, risks, and compliance considerations for cloud adoption in Ethiopia.', categorySlugs: ['digital-banking', 'tech-policy'], tagSlugs: ['cloud-computing', 'innovation', 'cyber-security'], imgColor: '00838F' },
+    { title: 'AI and Machine Learning Applications in Ethiopian Agriculture', excerpt: 'From crop disease detection to supply chain optimization — how AI is transforming Ethiopia\'s largest sector.', content: 'Agriculture employs over 70% of Ethiopia\'s workforce and contributes 35% of GDP. AI/ML technologies are now being applied to satellite imagery analysis for crop monitoring, mobile-based plant disease diagnosis, and predictive analytics for market prices. We examine case studies from local agritech startups and international partnerships bringing AI to Ethiopian farmers.', categorySlugs: ['startup-ecosystem'], tagSlugs: ['ai-ml', 'innovation', 'digital-ethiopia'], imgColor: '2E7D32' },
+  ];
+
+  for (const post of blogPosts) {
+    const slug = post.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 80);
+    const existing = await prisma.blogPost.findUnique({ where: { slug } });
+    if (existing) {
+      console.log('  EXISTS:', post.title);
+      continue;
+    }
+    const categoryIds = post.categorySlugs.map((s) => blogCatMap.get(s).id);
+    const tagIds = post.tagSlugs.map((s) => tagMap.get(s).id);
+    const encoded = encodeURIComponent(post.title.substring(0, 30));
+    await prisma.blogPost.create({
+      data: {
+        title: post.title,
+        slug,
+        excerpt: post.excerpt,
+        content: post.content,
+        status: 'ACTIVE',
+        imageUrl: `https://placehold.co/600x400/${post.imgColor}/white?text=${encoded}`,
+        categories: { create: categoryIds.map((id) => ({ categoryId: id })) },
+        tags: { create: tagIds.map((id) => ({ tagId: id })) },
+      },
+    });
+    console.log('  CREATED:', post.title);
+  }
+
+  console.log('\n--- Seeding Departments ---');
+  const departments = [
+    { name: 'Software Engineering', slug: 'software-engineering', description: 'Core software development and architecture team' },
+    { name: 'Product Management', slug: 'product-management', description: 'Product strategy, roadmapping, and customer discovery' },
+    { name: 'Sales & Marketing', slug: 'sales-marketing', description: 'Business development, digital marketing, and sales operations' },
+    { name: 'Customer Support', slug: 'customer-support', description: 'Technical support, client onboarding, and customer success' },
+    { name: 'Finance & Operations', slug: 'finance-operations', description: 'Finance, HR, legal, and internal operations' },
+  ];
+
+  const deptMap = new Map();
+  for (const dept of departments) {
+    const existing = await prisma.department.findUnique({ where: { slug: dept.slug } });
+    if (existing) {
+      deptMap.set(dept.slug, existing);
+      console.log('  EXISTS:', dept.name);
+    } else {
+      const created = await prisma.department.create({ data: dept });
+      deptMap.set(dept.slug, created);
+      console.log('  CREATED:', dept.name);
+    }
+  }
+
+  console.log('\n--- Seeding Careers ---');
+  const careers = [
+    { title: 'Senior NestJS Backend Developer', type: 'FULL_TIME', description: 'Design and build scalable backend services using NestJS, Prisma, and PostgreSQL for our fintech products.', requirements: '5+ years backend development, NestJS expertise, PostgreSQL, TypeScript, RESTful API design', location: 'Addis Ababa, Ethiopia', salary: 'Competitive' },
+    { title: 'Frontend Developer (React)', type: 'FULL_TIME', description: 'Build responsive web applications for digital banking platforms using React, TypeScript, and Tailwind CSS.', requirements: '3+ years React, TypeScript, state management, responsive design', location: 'Addis Ababa, Ethiopia', salary: 'Competitive' },
+    { title: 'DevOps Engineer', type: 'CONTRACT', description: 'Set up and maintain CI/CD pipelines, cloud infrastructure, and monitoring for our SaaS platform.', requirements: '3+ years DevOps, AWS, Docker, Kubernetes, Terraform', location: 'Remote', salary: 'Negotiable' },
+    { title: 'Product Manager', type: 'FULL_TIME', description: 'Drive product strategy for our digital banking solutions, working closely with Ethiopian banks and fintechs.', requirements: '5+ years product management, fintech experience preferred, data-driven mindset', location: 'Addis Ababa, Ethiopia', salary: 'Competitive' },
+    { title: 'Customer Support Specialist', type: 'FULL_TIME', description: 'Provide technical support and onboarding for our banking and fintech clients across Ethiopia.', requirements: '2+ years technical support, excellent communication in Amharic and English, IT background', location: 'Addis Ababa, Ethiopia', salary: 'Negotiable' },
+    { title: 'Mobile Developer (Flutter)', type: 'REMOTE', description: 'Build cross-platform mobile banking apps using Flutter with offline-first architecture for Ethiopian users.', requirements: '3+ years Flutter/Dart, state management, offline-first patterns, mobile security', location: 'Remote', salary: 'Competitive' },
+    { title: 'QA Automation Engineer', type: 'PART_TIME', description: 'Design and implement automated test suites for our banking APIs and web applications.', requirements: '3+ years QA, Selenium/Cypress, API testing, CI/CD integration', location: 'Addis Ababa, Ethiopia', salary: 'Negotiable' },
+  ];
+
+  const careerMap = new Map();
+  for (let i = 0; i < careers.length; i++) {
+    const career = careers[i];
+    const slug = career.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const existing = await prisma.career.findUnique({ where: { slug } });
+    if (existing) {
+      careerMap.set(slug, existing);
+      console.log('  EXISTS:', career.title);
+    } else {
+      const deptSlugs = ['software-engineering', 'software-engineering', 'software-engineering', 'product-management', 'customer-support', 'software-engineering', 'software-engineering'];
+      const dept = deptMap.get(deptSlugs[i]);
+      const created = await prisma.career.create({
+        data: {
+          title: career.title, slug, type: career.type, departmentId: dept.id,
+          description: career.description, requirements: career.requirements,
+          location: career.location, salary: career.salary, status: 'ACTIVE',
+        },
+      });
+      careerMap.set(slug, created);
+      console.log('  CREATED:', career.title);
+    }
+  }
+
+  console.log('\n--- Seeding Applications ---');
+  const applications = [
+    { fullName: 'Abebe Kebede', email: 'abebe.k@gmail.com', phoneNumber: '+251911234567', coverLetter: 'I have 6 years of NestJS experience building fintech platforms at Kifiya and Dashen Bank. I am excited about the opportunity to contribute to your digital banking products.', careerSlug: 'senior-nestjs-backend-developer' },
+    { fullName: 'Sara Tadesse', email: 'sara.t@outlook.com', phoneNumber: '+251923456789', coverLetter: 'With a strong background in React and TypeScript, I have built several enterprise dashboards and customer-facing applications. I am passionate about creating great user experiences for Ethiopian users.', careerSlug: 'frontend-developer-react' },
+    { fullName: 'Daniel Yohannes', email: 'daniel.y@gmail.com', coverLetter: 'As a DevOps engineer with experience at Ethio Telecom, I specialize in cloud migration and CI/CD pipeline optimization. I am looking for challenging remote opportunities.', careerSlug: 'devops-engineer' },
+    { fullName: 'Meron Haile', email: 'meron.haile@email.com', phoneNumber: '+251934567890', coverLetter: 'Having worked as a product manager for mobile banking products, I have deep understanding of the Ethiopian financial sector and user needs.', careerSlug: 'product-manager' },
+    { fullName: 'Bereket Assefa', email: 'beki.a@yahoo.com', coverLetter: 'I have 3 years of Flutter experience and have built two mobile banking apps currently in production. I am excited about remote opportunities building apps for Ethiopian users.', careerSlug: 'mobile-developer-flutter' },
+  ];
+
+  for (const app of applications) {
+    const career = careerMap.get(app.careerSlug);
+    if (!career) continue;
+    const existing = await prisma.application.findFirst({
+      where: { email: app.email, careerId: career.id },
+    });
+    if (existing) {
+      console.log('  EXISTS:', app.fullName, '-', career.title);
+      continue;
+    }
+    await prisma.application.create({
+      data: {
+        fullName: app.fullName, email: app.email, phoneNumber: app.phoneNumber,
+        coverLetter: app.coverLetter, careerId: career.id,
+        cvUrl: `https://placehold.co/100x140/37474F/white?text=${encodeURIComponent(app.fullName.replace(' ', '+'))}`,
+        status: 'NEW',
+      },
+    });
+    console.log('  CREATED:', app.fullName, '-', career.title);
+  }
+
+  console.log('\n--- Seeding Contact Messages ---');
+  const contactMessages = [
+    { fullName: 'Tsegaye Wolde', email: 'tsegaye@company.et', phoneNumber: '+251955112233', companyName: 'Dashen Bank', subject: 'PRODUCT_QUOTE', message: 'We are interested in your Digital Banking Solutions and would like to request a detailed quote and product demo for our bank.' },
+    { fullName: 'Hiwot Getachew', email: 'hiwot.g@gmail.com', subject: 'PARTNERSHIP', message: 'I represent a fintech startup in Addis Ababa and we would like to explore partnership opportunities with your organization for a mobile wallet integration.' },
+    { fullName: 'Yonas Tadesse', email: 'yonas@ethiotelecom.et', phoneNumber: '+251966778899', companyName: 'Ethio Telecom', subject: 'TECHNICAL_SUPPORT', message: 'We are experiencing integration issues with the Telebirr API and need urgent technical support to resolve transaction failures on our platform.' },
+    { fullName: 'Mahlet Bekele', email: 'mahlet.b@gmail.com', subject: 'CAREER_OPPORTUNITY', message: 'I have been following your company\'s work in digital banking and would love to learn about current job openings for backend developers with NestJS experience.' },
+    { fullName: 'Yared Mekonnen', email: 'yared.m@exportco.et', companyName: 'Ethiopian Coffee Exports PLC', subject: 'COFFEE_EXPORT', message: 'We are a coffee export company looking for digital solutions to manage our supply chain and international client relationships. Would love to discuss.' },
+    { fullName: 'Bethlehem Adane', email: 'bethy.a@outlook.com', phoneNumber: '+251944556677', subject: 'GENERAL_INQUIRY', message: 'I recently learned about your company and would like more information about your products and services for small business digital transformation.' },
+  ];
+
+  for (const msg of contactMessages) {
+    const existing = await prisma.contactMessage.findFirst({
+      where: { email: msg.email, subject: msg.subject },
+    });
+    if (existing) {
+      console.log('  EXISTS:', msg.fullName, '-', msg.subject);
+      continue;
+    }
+    await prisma.contactMessage.create({ data: msg });
+    console.log('  CREATED:', msg.fullName, '-', msg.subject);
+  }
+
   console.log('\n--- Seed Complete ---');
   await prisma.$disconnect();
 }

@@ -26,8 +26,31 @@ enum OrganizationType {
 enum CareerType {
   FULL_TIME
   PART_TIME
-  INTERNSHIP
   CONTRACT
+  REMOTE
+}
+
+enum ContactSubject {
+  GENERAL_INQUIRY
+  PRODUCT_QUOTE
+  PARTNERSHIP
+  TECHNICAL_SUPPORT
+  CAREER_OPPORTUNITY
+  COFFEE_EXPORT
+  OTHER
+}
+
+enum ContactStatus {
+  NEW
+  READ
+  RESPONDED
+}
+
+enum ApplicationStatus {
+  NEW
+  REVIEWED
+  ACCEPTED
+  REJECTED
 }
 
 model User {
@@ -144,18 +167,33 @@ model TeamMember {
 }
 
 model Career {
-  id           Int        @id @default(autoincrement())
+  id           Int           @id @default(autoincrement())
   title        String
-  slug         String     @unique
+  slug         String        @unique
   type         CareerType
   departmentId Int
-  department   Department @relation(fields: [departmentId], references: [id])
+  department   Department    @relation(fields: [departmentId], references: [id])
   description  String
   requirements String?
   location     String?
   salary       String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  status       Status        @default(ACTIVE)
+  applications Application[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Application {
+  id          Int               @id @default(autoincrement())
+  fullName    String
+  email       String
+  phoneNumber String?
+  cvUrl       String
+  coverLetter String?
+  status      ApplicationStatus @default(NEW)
+  careerId    Int
+  career      Career            @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
 }
 
 model BlogPost {
@@ -174,12 +212,13 @@ model BlogPost {
 }
 
 model BlogCategory {
-  id        Int                 @id @default(autoincrement())
-  name      String
-  slug      String              @unique
-  posts     BlogPostCategory[]
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
+  id          Int                 @id @default(autoincrement())
+  name        String
+  slug        String              @unique
+  description String?
+  posts       BlogPostCategory[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
 }
 
 model BlogTag {
@@ -232,13 +271,14 @@ model Testimonial {
 }
 
 model ContactMessage {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String
-  subject   String?
-  message   String
-  phone     String?
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int            @id @default(autoincrement())
+  fullName    String
+  email       String
+  subject     ContactSubject
+  message     String
+  phoneNumber String?
+  companyName String?
+  isRead      Boolean        @default(false)
+  status      ContactStatus  @default(NEW)
+  createdAt   DateTime       @default(now())
 }

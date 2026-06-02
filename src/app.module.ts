@@ -8,6 +8,11 @@ import { ProductCategoriesModule } from './product-categories/product-categories
 import { ProductsModule } from './products/products.module';
 import { ProjectCategoriesModule } from './project-categories/project-categories.module';
 import { ProjectsModule } from './projects/projects.module';
+import { BlogPostsModule } from './blog-posts/blog-posts.module';
+import { BlogCategoriesModule } from './blog-categories/blog-categories.module';
+import { BlogTagsModule } from './blog-tags/blog-tags.module';
+import { ContactMessagesModule } from './contact-messages/contact-messages.module';
+import { CareersModule } from './careers/careers.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -25,6 +30,11 @@ import { AppService } from './app.service';
     ProductsModule,
     ProjectCategoriesModule,
     ProjectsModule,
+    BlogPostsModule,
+    BlogCategoriesModule,
+    BlogTagsModule,
+    ContactMessagesModule,
+    CareersModule,
   ],
   controllers: [AppController],
   providers: [
