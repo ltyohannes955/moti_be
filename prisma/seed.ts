@@ -286,6 +286,56 @@ async function main() {
     }
   }
 
+  console.log('\n--- Seeding Team Members ---');
+  const teamMembers = [
+    { name: 'Dawit Tesfaye', position: 'Senior Backend Developer', bio: 'Full-stack engineer with 8 years experience building fintech platforms. Previously at Dashen Bank.', order: 1 },
+    { name: 'Selamawit Girma', position: 'Frontend Developer', bio: 'React and TypeScript specialist focused on accessible, responsive web applications for Ethiopian users.', order: 2 },
+    { name: 'Mulugeta Alemu', position: 'Mobile Developer (Flutter)', bio: 'Flutter expert building cross-platform mobile banking apps with offline-first architecture.', order: 3 },
+    { name: 'Tigist Abera', position: 'DevOps Engineer', bio: 'Cloud infrastructure specialist managing CI/CD pipelines and AWS deployments.', order: 4 },
+    { name: 'Biruk Tadesse', position: 'Product Manager', bio: 'Drives product strategy for digital banking solutions with deep knowledge of Ethiopian financial sector.', order: 1 },
+    { name: 'Rahel Endale', position: 'UI/UX Designer', bio: 'Creates intuitive bilingual interfaces (Amharic/English) for digital banking and ERP products.', order: 2 },
+    { name: 'Yohannes Kebede', position: 'Sales Director', bio: '15 years of enterprise sales experience, connecting Ethiopian banks and telecoms with technology solutions.', order: 1 },
+    { name: 'Mekdes Worku', position: 'Digital Marketing Manager', bio: 'SEO and social media strategist driving brand visibility for Ethiopian tech products.', order: 2 },
+    { name: 'Natnael Bekele', position: 'Customer Support Lead', bio: 'Manages 24/7 support operations ensuring client satisfaction and rapid issue resolution.', order: 1 },
+    { name: 'Hanna Tekle', position: 'Technical Support Specialist', bio: 'Handles API integration support and client onboarding for banking and fintech clients.', order: 2 },
+    { name: 'Ermias Assefa', position: 'Finance Manager', bio: 'Oversees financial operations, budgeting, and compliance for the organization.', order: 1 },
+    { name: 'Betelhem Tadesse', position: 'HR Coordinator', bio: 'Manages recruitment, onboarding, and employee engagement programs.', order: 2 },
+  ];
+
+  const departmentAssignments = [
+    'software-engineering', 'software-engineering', 'software-engineering', 'software-engineering',
+    'product-management', 'product-management',
+    'sales-marketing', 'sales-marketing',
+    'customer-support', 'customer-support',
+    'finance-operations', 'finance-operations',
+  ];
+
+  for (let i = 0; i < teamMembers.length; i++) {
+    const member = teamMembers[i];
+    const dept = deptMap.get(departmentAssignments[i]);
+    const slug = member.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const existing = await prisma.teamMember.findFirst({
+      where: { name: member.name, departmentId: dept.id },
+    });
+    if (existing) {
+      console.log('  EXISTS:', member.name, '-', member.position);
+    } else {
+      const encoded = encodeURIComponent(member.name);
+      await prisma.teamMember.create({
+        data: {
+          name: member.name,
+          position: member.position,
+          departmentId: dept.id,
+          bio: member.bio,
+          order: member.order,
+          status: 'ACTIVE',
+          imageUrl: `https://placehold.co/300x300/1B5E20/white?text=${encoded}`,
+        },
+      });
+      console.log('  CREATED:', member.name, '-', member.position);
+    }
+  }
+
   console.log('\n--- Seeding Careers ---');
   const careers = [
     { title: 'Senior NestJS Backend Developer', type: 'FULL_TIME', description: 'Design and build scalable backend services using NestJS, Prisma, and PostgreSQL for our fintech products.', requirements: '5+ years backend development, NestJS expertise, PostgreSQL, TypeScript, RESTful API design', location: 'Addis Ababa, Ethiopia', salary: 'Competitive' },

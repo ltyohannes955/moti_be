@@ -845,6 +845,202 @@ curl -H "Authorization: Bearer <TOKEN>" "http://localhost:3000/careers/1/applica
 
 ---
 
+## Clients (Organizations)
+
+### GET /clients
+
+```
+Public
+```
+
+```bash
+curl "http://localhost:3000/clients?page=1&limit=10&type=CLIENT&status=ACTIVE&search=ethio"
+```
+
+| Filter | Type | Values |
+|---|---|---|
+| `type` | string | `CLIENT`, `PARTNER`, `VENDOR` |
+| `status` | string | `ACTIVE`, `INACTIVE` |
+| `search` | string | Search in name |
+
+**Response includes:** projects array.
+
+### GET /clients/:id
+
+```
+Public
+```
+
+```bash
+curl "http://localhost:3000/clients/1"
+```
+
+### POST /clients
+
+```
+ADMIN only
+```
+
+```bash
+curl -X POST http://localhost:3000/clients \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"name": "Acme Corp", "type": "CLIENT", "website": "https://acme.com", "description": "Global logistics firm"}'
+```
+
+| Field | Required | Notes |
+|---|---|---|
+| `name` | Yes | Min 2 chars |
+| `type` | Yes | `CLIENT`, `PARTNER`, `VENDOR` |
+| `website` | No | |
+| `description` | No | |
+| `status` | No | Default `ACTIVE` |
+
+### PATCH /clients/:id
+
+```
+ADMIN only
+```
+
+### DELETE /clients/:id
+
+```
+ADMIN only — blocks if client has projects
+```
+
+---
+
+## Departments
+
+### GET /departments
+
+```
+Public
+```
+
+```bash
+curl "http://localhost:3000/departments?page=1&limit=10&status=ACTIVE"
+```
+
+| Filter | Type | Values |
+|---|---|---|
+| `status` | string | `ACTIVE`, `INACTIVE` |
+
+**Response includes:** teamMembers array, careers array.
+
+### GET /departments/:id
+
+```
+Public
+```
+
+```bash
+curl "http://localhost:3000/departments/1"
+```
+
+### POST /departments
+
+```
+ADMIN only
+```
+
+```bash
+curl -X POST http://localhost:3000/departments \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -d '{"name": "Engineering", "description": "Software development team"}'
+```
+
+| Field | Required | Notes |
+|---|---|---|
+| `name` | Yes | Min 2 chars |
+| `description` | No | |
+| `status` | No | Default `ACTIVE` |
+
+### PATCH /departments/:id
+
+```
+ADMIN only
+```
+
+### DELETE /departments/:id
+
+```
+ADMIN only — blocks if department has team members or careers
+```
+
+---
+
+## Team Members
+
+### GET /team
+
+```
+Public
+```
+
+```bash
+curl "http://localhost:3000/team?page=1&limit=10&departmentId=1&status=ACTIVE"
+```
+
+| Filter | Type | Values |
+|---|---|---|
+| `departmentId` | number | Department ID |
+| `status` | string | `ACTIVE`, `INACTIVE` |
+
+**Response includes:** department object.
+
+### GET /team/:id
+
+```
+Public
+```
+
+```bash
+curl "http://localhost:3000/team/1"
+```
+
+### POST /team
+
+```
+ADMIN only — multipart form (single image)
+```
+
+```bash
+curl -X POST http://localhost:3000/team \
+  -H "Authorization: Bearer <TOKEN>" \
+  -F "name=Abebe Kebede" \
+  -F "departmentId=1" \
+  -F "position=Senior Developer" \
+  -F "bio=Full-stack developer with 10 years experience" \
+  -F "order=1" \
+  -F "image=@photo.jpg"
+```
+
+| Field | Required | Notes |
+|---|---|---|
+| `name` | Yes | Min 2 chars |
+| `departmentId` | Yes | Must exist |
+| `position` | Yes | |
+| `image` | No | Single file — jpg, png, gif, webp |
+| `bio` | No | |
+| `order` | No | Display order |
+| `status` | No | Default `ACTIVE` |
+
+### PATCH /team/:id
+
+```
+ADMIN only — multipart form
+```
+
+### DELETE /team/:id
+
+```
+ADMIN only
+```
+
+---
+
 ## Contact Messages
 
 ### POST /contact-messages
@@ -916,6 +1112,8 @@ No PATCH/DELETE — contact messages are immutable.
 | POST `/coffee-types` | `image` | 1 | jpg, png, gif, webp | `uploads/coffee-types/` |
 | PATCH `/coffee-types/:id` | `image` | 1 | jpg, png, gif, webp | `uploads/coffee-types/` |
 | POST `/careers/:id/apply` | `cv` | 1 | pdf, doc, docx | `uploads/cvs/` |
+| POST `/team` | `image` | 1 | jpg, png, gif, webp | `uploads/team/` |
+| PATCH `/team/:id` | `image` | 1 | jpg, png, gif, webp | `uploads/team/` |
 
 **Image URLs** are served at: `http://localhost:3000/uploads/products/filename.jpg` (static file serving via Express).
 
@@ -973,6 +1171,21 @@ JWT_EXPIRES_IN=86400
 | Product Categories | POST | `/product-categories` | ADMIN |
 | Product Categories | PATCH | `/product-categories/:id` | ADMIN |
 | Product Categories | DELETE | `/product-categories/:id` | ADMIN |
+| Clients | GET | `/clients` | Public |
+| Clients | GET | `/clients/:id` | Public |
+| Clients | POST | `/clients` | ADMIN |
+| Clients | PATCH | `/clients/:id` | ADMIN |
+| Clients | DELETE | `/clients/:id` | ADMIN |
+| Departments | GET | `/departments` | Public |
+| Departments | GET | `/departments/:id` | Public |
+| Departments | POST | `/departments` | ADMIN |
+| Departments | PATCH | `/departments/:id` | ADMIN |
+| Departments | DELETE | `/departments/:id` | ADMIN |
+| Team | GET | `/team` | Public |
+| Team | GET | `/team/:id` | Public |
+| Team | POST | `/team` | ADMIN |
+| Team | PATCH | `/team/:id` | ADMIN |
+| Team | DELETE | `/team/:id` | ADMIN |
 | Projects | GET | `/projects` | Public |
 | Projects | GET | `/projects/:id` | Public |
 | Projects | POST | `/projects` | ADMIN |

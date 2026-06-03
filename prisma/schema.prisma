@@ -147,6 +147,7 @@ model Department {
   name        String
   slug        String       @unique
   description String?
+  status      Status       @default(ACTIVE)
   teamMembers TeamMember[]
   careers     Career[]
   createdAt   DateTime     @default(now())
@@ -162,6 +163,7 @@ model TeamMember {
   department   Department @relation(fields: [departmentId], references: [id])
   bio          String?
   order        Int?
+  status       Status     @default(ACTIVE)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
