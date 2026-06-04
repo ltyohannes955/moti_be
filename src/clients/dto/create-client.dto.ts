@@ -20,6 +20,10 @@ export class CreateClientDto {
   description?: string;
 
   @IsOptional()
+  @IsString()
+  logo?: string;
+
+  @IsOptional()
   @IsEnum(Status)
   status?: Status;
 }

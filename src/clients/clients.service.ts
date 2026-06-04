@@ -39,11 +39,36 @@ export class ClientsService {
         type: dto.type,
         website: dto.website,
         description: dto.description,
+        logo: dto.logo,
         status: dto.status ?? Status.ACTIVE,
       },
     });
 
     return this.findOne(org.id);
+  }
+
+  async updateLogo(id: number, base64: string) {
+    const org = await this.prisma.organization.findUnique({ where: { id } });
+    if (!org) throw new NotFoundException('Client not found');
+
+    await this.prisma.organization.update({
+      where: { id },
+      data: { logo: base64 },
+    });
+
+    return this.findOne(id);
+  }
+
+  async removeLogo(id: number) {
+    const org = await this.prisma.organization.findUnique({ where: { id } });
+    if (!org) throw new NotFoundException('Client not found');
+
+    await this.prisma.organization.update({
+      where: { id },
+      data: { logo: null },
+    });
+
+    return this.findOne(id);
   }
 
   async findAll(query: QueryClientsDto): Promise<PaginatedResult<any>> {
@@ -91,6 +116,7 @@ export class ClientsService {
     if (dto.type !== undefined) data.type = dto.type;
     if (dto.website !== undefined) data.website = dto.website;
     if (dto.description !== undefined) data.description = dto.description;
+    if (dto.logo !== undefined) data.logo = dto.logo;
     if (dto.status !== undefined) data.status = dto.status;
 
     await this.prisma.organization.update({ where: { id }, data });

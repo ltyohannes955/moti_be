@@ -96,19 +96,27 @@ async function main() {
 
   console.log('\n--- Seeding Organizations ---');
   const organizations = [
-    { name: 'Ethio Telecom', slug: 'ethio-telecom', type: 'CLIENT', description: 'Leading telecommunications provider in Ethiopia', website: 'https://www.ethiotelecom.et' },
-    { name: 'Dashen Bank', slug: 'dashen-bank', type: 'CLIENT', description: 'One of the largest private banks in Ethiopia', website: 'https://www.dashenbanksc.com' },
-    { name: 'Ethiopian Airlines', slug: 'ethiopian-airlines', type: 'CLIENT', description: 'The flag carrier of Ethiopia and Africa\'s largest airline', website: 'https://www.ethiopianairlines.com' },
-    { name: 'Awash Bank', slug: 'awash-bank', type: 'PARTNER', description: 'Leading private commercial bank established in 1994', website: 'https://www.awashbank.com' },
-    { name: 'Kifiya Financial Technology', slug: 'kifiya-fintech', type: 'PARTNER', description: 'Financial technology company providing digital payment solutions', website: 'https://www.kifiya.com' },
+    { name: 'Ethio Telecom', slug: 'ethio-telecom', type: 'CLIENT', description: 'Leading telecommunications provider in Ethiopia', website: 'https://www.ethiotelecom.et', logo: 'https://placehold.co/200x80/E65100/white?text=Ethio+Telecom' },
+    { name: 'Dashen Bank', slug: 'dashen-bank', type: 'CLIENT', description: 'One of the largest private banks in Ethiopia', website: 'https://www.dashenbanksc.com', logo: 'https://placehold.co/200x80/1565C0/white?text=Dashen+Bank' },
+    { name: 'Ethiopian Airlines', slug: 'ethiopian-airlines', type: 'CLIENT', description: 'The flag carrier of Ethiopia and Africa\'s largest airline', website: 'https://www.ethiopianairlines.com', logo: 'https://placehold.co/200x80/6A1B9A/white?text=ET+Airlines' },
+    { name: 'Awash Bank', slug: 'awash-bank', type: 'PARTNER', description: 'Leading private commercial bank established in 1994', website: 'https://www.awashbank.com', logo: 'https://placehold.co/200x80/2E7D32/white?text=Awash+Bank' },
+    { name: 'Kifiya Financial Technology', slug: 'kifiya-fintech', type: 'PARTNER', description: 'Financial technology company providing digital payment solutions', website: 'https://www.kifiya.com', logo: 'https://placehold.co/200x80/00838F/white?text=Kifiya' },
   ];
 
   const orgMap = new Map();
   for (const org of organizations) {
     const existing = await prisma.organization.findUnique({ where: { slug: org.slug } });
     if (existing) {
+      if (!existing.logo) {
+        await prisma.organization.update({
+          where: { slug: org.slug },
+          data: { logo: org.logo },
+        });
+        console.log('  LOGO ADDED:', org.name);
+      } else {
+        console.log('  EXISTS:', org.name);
+      }
       orgMap.set(org.slug, existing);
-      console.log('  EXISTS:', org.name);
     } else {
       const created = await prisma.organization.create({ data: org });
       orgMap.set(org.slug, created);
@@ -140,22 +148,34 @@ async function main() {
 
   console.log('\n--- Seeding Projects ---');
   const projects = [
-    { title: 'Telecom Customer Portal', slug: 'telecom-customer-portal', description: 'Self-service customer portal for Ethio Telecom with bill payment, usage tracking, and support ticketing.', categorySlug: 'website-development', clientSlug: 'ethio-telecom', imgColor: 'E65100' },
-    { title: 'Dashen Mobile Banking App', slug: 'dashen-mobile-banking', description: 'Complete mobile banking experience with account management, transfers, bill payments, and Amole integration.', categorySlug: 'mobile-app-development', clientSlug: 'dashen-bank', imgColor: '1565C0' },
-    { title: 'Ethiopian Airlines Booking Engine', slug: 'airlines-booking-engine', description: 'Next-generation flight booking platform with multi-city search, seat selection, and ShebaMiles integration.', categorySlug: 'website-development', clientSlug: 'ethiopian-airlines', imgColor: '6A1B9A' },
-    { title: 'Awash Digital Wallet', slug: 'awash-digital-wallet', description: 'Mobile wallet app for Awash Bank customers with QR payments, airtime purchase, and peer-to-peer transfers.', categorySlug: 'mobile-app-development', clientSlug: 'awash-bank', imgColor: '2E7D32' },
-    { title: 'Kifiya Payment Gateway Integration', slug: 'kifiya-payment-gateway', description: 'API-based payment gateway integration connecting Kifiya with major Ethiopian banks and mobile money providers.', categorySlug: 'it-consulting', clientSlug: 'kifiya-fintech', imgColor: '00838F' },
-    { title: 'Ethio Telecom Cloud Migration', slug: 'ethio-telecom-cloud-migration', description: 'Large-scale cloud infrastructure migration from on-premise data centers to hybrid cloud architecture.', categorySlug: 'cloud-infrastructure', clientSlug: 'ethio-telecom', imgColor: '37474F' },
-    { title: 'Dashen Bank SEO Campaign', slug: 'dashen-seo-campaign', description: 'Comprehensive SEO and digital marketing campaign to increase online visibility for Dashen Bank products.', categorySlug: 'digital-marketing', clientSlug: 'dashen-bank', imgColor: 'EF6C00' },
-    { title: 'Airlines Crew Management App', slug: 'airlines-crew-app', description: 'Internal mobile app for Ethiopian Airlines crew scheduling, roster management, and flight briefings.', categorySlug: 'mobile-app-development', clientSlug: 'ethiopian-airlines', imgColor: '7B1FA2' },
-    { title: 'Awash Bank Corporate Portal', slug: 'awash-corporate-portal', description: 'Corporate banking portal with bulk payments, payroll processing, trade finance, and forex management.', categorySlug: 'website-development', clientSlug: 'awash-bank', imgColor: '388E3C' },
-    { title: 'Kifiya DevOps Pipeline Setup', slug: 'kifiya-devops-pipeline', description: 'End-to-end CI/CD pipeline setup with automated testing, containerization, and monitoring for Kifiya products.', categorySlug: 'cloud-infrastructure', clientSlug: 'kifiya-fintech', imgColor: '546E7A' },
+    { title: 'Telecom Customer Portal', slug: 'telecom-customer-portal', description: 'Self-service customer portal for Ethio Telecom with bill payment, usage tracking, and support ticketing.', categorySlug: 'website-development', clientSlug: 'ethio-telecom', images: ['https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=600&h=400&fit=crop'] },
+    { title: 'Dashen Mobile Banking App', slug: 'dashen-mobile-banking', description: 'Complete mobile banking experience with account management, transfers, bill payments, and Amole integration.', categorySlug: 'mobile-app-development', clientSlug: 'dashen-bank', images: ['https://images.unsplash.com/photo-1616077168079-7ab467b0800b?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1563986768609-322da13575f2?w=600&h=400&fit=crop'] },
+    { title: 'Ethiopian Airlines Booking Engine', slug: 'airlines-booking-engine', description: 'Next-generation flight booking platform with multi-city search, seat selection, and ShebaMiles integration.', categorySlug: 'website-development', clientSlug: 'ethiopian-airlines', images: ['https://images.unsplash.com/photo-1436491865332-7a61a109bb05?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1488646953014-85cb804e2392?w=600&h=400&fit=crop'] },
+    { title: 'Awash Digital Wallet', slug: 'awash-digital-wallet', description: 'Mobile wallet app for Awash Bank customers with QR payments, airtime purchase, and peer-to-peer transfers.', categorySlug: 'mobile-app-development', clientSlug: 'awash-bank', images: ['https://images.unsplash.com/photo-1559526324-4b87b5ae9155?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&h=400&fit=crop'] },
+    { title: 'Kifiya Payment Gateway Integration', slug: 'kifiya-payment-gateway', description: 'API-based payment gateway integration connecting Kifiya with major Ethiopian banks and mobile money providers.', categorySlug: 'it-consulting', clientSlug: 'kifiya-fintech', images: ['https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop'] },
+    { title: 'Ethio Telecom Cloud Migration', slug: 'ethio-telecom-cloud-migration', description: 'Large-scale cloud infrastructure migration from on-premise data centers to hybrid cloud architecture.', categorySlug: 'cloud-infrastructure', clientSlug: 'ethio-telecom', images: ['https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&h=400&fit=crop'] },
+    { title: 'Dashen Bank SEO Campaign', slug: 'dashen-seo-campaign', description: 'Comprehensive SEO and digital marketing campaign to increase online visibility for Dashen Bank products.', categorySlug: 'digital-marketing', clientSlug: 'dashen-bank', images: ['https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=600&h=400&fit=crop'] },
+    { title: 'Airlines Crew Management App', slug: 'airlines-crew-app', description: 'Internal mobile app for Ethiopian Airlines crew scheduling, roster management, and flight briefings.', categorySlug: 'mobile-app-development', clientSlug: 'ethiopian-airlines', images: ['https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1434626881859-194d67b2b86f?w=600&h=400&fit=crop'] },
+    { title: 'Awash Bank Corporate Portal', slug: 'awash-corporate-portal', description: 'Corporate banking portal with bulk payments, payroll processing, trade finance, and forex management.', categorySlug: 'website-development', clientSlug: 'awash-bank', images: ['https://images.unsplash.com/photo-1486406143026-8e377759f681?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop'] },
+    { title: 'Kifiya DevOps Pipeline Setup', slug: 'kifiya-devops-pipeline', description: 'End-to-end CI/CD pipeline setup with automated testing, containerization, and monitoring for Kifiya products.', categorySlug: 'cloud-infrastructure', clientSlug: 'kifiya-fintech', images: ['https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=600&h=400&fit=crop', 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&h=400&fit=crop'] },
   ];
 
   for (const proj of projects) {
     const existing = await prisma.project.findUnique({ where: { slug: proj.slug } });
     if (existing) {
-      console.log('  EXISTS:', proj.title);
+      const currentImages = await prisma.projectImage.findMany({ where: { projectId: existing.id } });
+      const hasPlaceholders = currentImages.some((img) => img.imageUrl.includes('placehold.co'));
+      if (hasPlaceholders) {
+        await prisma.projectImage.deleteMany({ where: { projectId: existing.id } });
+        await Promise.all(
+          proj.images.map((url) =>
+            prisma.projectImage.create({ data: { imageUrl: url, projectId: existing.id } }),
+          ),
+        );
+        console.log('  IMAGES REPLACED:', proj.title);
+      } else {
+        console.log('  EXISTS:', proj.title);
+      }
       continue;
     }
     const category = projCatMap.get(proj.categorySlug);
@@ -170,13 +190,11 @@ async function main() {
         status: 'ACTIVE',
       },
     });
-    const encoded = encodeURIComponent(proj.title);
-    await prisma.projectImage.create({
-      data: {
-        imageUrl: `https://placehold.co/600x400/${proj.imgColor}/white?text=${encoded}`,
-        projectId: project.id,
-      },
-    });
+    await Promise.all(
+      proj.images.map((url) =>
+        prisma.projectImage.create({ data: { imageUrl: url, projectId: project.id } }),
+      ),
+    );
     console.log('  CREATED:', proj.title);
   }
 

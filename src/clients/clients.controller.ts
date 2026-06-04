@@ -1,6 +1,10 @@
 import {
-  Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe, UseGuards,
+  Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe,
+  UseGuards, UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -9,6 +13,26 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Public } from '../auth/decorators/public.decorator';
 import { Role } from '../../generated/prisma/client';
+
+const logoInterceptor = FileInterceptor('logo', {
+  storage: diskStorage({
+    destination: join(process.cwd(), 'uploads', 'clients'),
+    filename: (_req, file, cb) => {
+      const unique = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
+      cb(null, `${unique}${extname(file.originalname)}`);
+    },
+  }),
+  fileFilter: (_req, file, cb) => {
+    if (!file.mimetype.match(/^image\/(jpeg|png|gif|webp|svg\+xml)$/)) {
+      return cb(new BadRequestException('Only image files are allowed (jpg, png, gif, webp, svg)'), false);
+    }
+    cb(null, true);
+  },
+});
+
+function logoPath(file: Express.Multer.File): string {
+  return `uploads/clients/${file.filename}`;
+}
 
 @Controller('clients')
 export class ClientsController {
@@ -29,18 +53,44 @@ export class ClientsController {
   @Post()
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @UseGuards(RolesGuard)
-  create(@Body() dto: CreateClientDto) {
+  @UseInterceptors(logoInterceptor)
+  create(
+    @Body() dto: CreateClientDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    if (file) dto.logo = logoPath(file);
     return this.service.create(dto);
   }
 
   @Patch(':id')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @UseGuards(RolesGuard)
+  @UseInterceptors(logoInterceptor)
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateClientDto,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
+    if (file) dto.logo = logoPath(file);
     return this.service.update(id, dto);
+  }
+
+  @Post(':id/logo')
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @UseGuards(RolesGuard)
+  @UseInterceptors(logoInterceptor)
+  uploadLogo(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.service.updateLogo(id, logoPath(file));
+  }
+
+  @Delete(':id/logo')
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @UseGuards(RolesGuard)
+  removeLogo(@Param('id', ParseIntPipe) id: number) {
+    return this.service.removeLogo(id);
   }
 
   @Delete(':id')
