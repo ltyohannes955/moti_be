@@ -31,6 +31,13 @@ export class TeamService {
     return this.findOne(member.id);
   }
 
+  private mapImage(member: any) {
+    if (member.imageUrl?.startsWith('data:')) {
+      member.imageUrl = `/team/${member.id}/image`;
+    }
+    return member;
+  }
+
   async findAll(query: QueryTeamMembersDto): Promise<PaginatedResult<any>> {
     const { page = 1, limit = 10, sort = 'newest', departmentId, status } = query;
     const where: Record<string, unknown> = {};
@@ -50,7 +57,7 @@ export class TeamService {
       this.prisma.teamMember.count({ where }),
     ]);
 
-    return paginate(data, total, page, limit);
+    return paginate(data.map((m) => this.mapImage(m)), total, page, limit);
   }
 
   async findOne(id: number) {
@@ -59,7 +66,7 @@ export class TeamService {
       include: { department: true },
     });
     if (!member) throw new NotFoundException('Team member not found');
-    return member;
+    return this.mapImage(member);
   }
 
   async update(id: number, dto: UpdateTeamMemberDto) {

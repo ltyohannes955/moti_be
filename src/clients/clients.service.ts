@@ -71,6 +71,13 @@ export class ClientsService {
     return this.findOne(id);
   }
 
+  private mapLogo(org: any) {
+    if (org.logo?.startsWith('data:')) {
+      org.logo = `/clients/${org.id}/logo`;
+    }
+    return org;
+  }
+
   async findAll(query: QueryClientsDto): Promise<PaginatedResult<any>> {
     const { page = 1, limit = 10, sort = 'newest', type, status, search } = query;
     const where: Record<string, unknown> = {};
@@ -92,7 +99,7 @@ export class ClientsService {
       this.prisma.organization.count({ where }),
     ]);
 
-    return paginate(data, total, page, limit);
+    return paginate(data.map((o) => this.mapLogo(o)), total, page, limit);
   }
 
   async findOne(id: number) {
@@ -101,7 +108,7 @@ export class ClientsService {
       include: { projects: true },
     });
     if (!org) throw new NotFoundException('Client not found');
-    return org;
+    return this.mapLogo(org);
   }
 
   async update(id: number, dto: UpdateClientDto) {

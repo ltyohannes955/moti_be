@@ -2,8 +2,7 @@ import {
   Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe, UseGuards, UseInterceptors, UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { memoryStorage } from 'multer';
 import { TeamService } from './team.service';
 import { CreateTeamMemberDto } from './dto/create-team-member.dto';
 import { UpdateTeamMemberDto } from './dto/update-team-member.dto';
@@ -12,22 +11,20 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Public } from '../auth/decorators/public.decorator';
 import { Role } from '../../generated/prisma/client';
+import { toBase64 } from '../common/utils/file.util';
 
-const multerOptions = {
-  storage: diskStorage({
-    destination: join(process.cwd(), 'uploads', 'team'),
-    filename: (_req, file, cb) => {
-      const unique = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
-      cb(null, `${unique}${extname(file.originalname)}`);
-    },
-  }),
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+
+const teamInterceptor = FileInterceptor('image', {
+  storage: memoryStorage(),
+  limits: { fileSize: MAX_IMAGE_SIZE },
   fileFilter: (_req, file, cb) => {
     if (!file.mimetype.match(/^image\/(jpeg|png|gif|webp)$/)) {
       return cb(new Error('Only image files are allowed'), false);
     }
     cb(null, true);
   },
-};
+});
 
 @Controller('team')
 export class TeamController {
@@ -48,13 +45,13 @@ export class TeamController {
   @Post()
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @UseGuards(RolesGuard)
-  @UseInterceptors(FileInterceptor('image', multerOptions))
+  @UseInterceptors(teamInterceptor)
   create(
     @Body() dto: CreateTeamMemberDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
     if (file) {
-      dto.imageUrl = `uploads/team/${file.filename}`;
+      dto.imageUrl = toBase64(file);
     }
     return this.service.create(dto);
   }
@@ -62,14 +59,14 @@ export class TeamController {
   @Patch(':id')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @UseGuards(RolesGuard)
-  @UseInterceptors(FileInterceptor('image', multerOptions))
+  @UseInterceptors(teamInterceptor)
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateTeamMemberDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
     if (file) {
-      dto.imageUrl = `uploads/team/${file.filename}`;
+      dto.imageUrl = toBase64(file);
     }
     return this.service.update(id, dto);
   }

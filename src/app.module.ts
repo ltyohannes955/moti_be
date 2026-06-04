@@ -20,6 +20,7 @@ import { CoffeeTypesModule } from './coffee-types/coffee-types.module';
 import { ClientsModule } from './clients/clients.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { TeamModule } from './team/team.module';
+import { ImagesModule } from './images/images.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -49,6 +50,7 @@ import { AppService } from './app.service';
     ClientsModule,
     DepartmentsModule,
     TeamModule,
+    ImagesModule,
   ],
   controllers: [AppController],
   providers: [

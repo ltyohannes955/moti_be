@@ -1,11 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { QueryProductsDto } from './dto/query-products.dto';
 import { paginate, PaginatedResult } from '../common/interfaces/paginated-result.interface';
+import { toBase64 } from '../common/utils/file.util';
 import { Status } from '../../generated/prisma/client';
 
 @Injectable()
@@ -54,7 +53,7 @@ export class ProductsService {
         files.map((file) =>
           this.prisma.productImage.create({
             data: {
-              imageUrl: `uploads/products/${file.filename}`,
+              imageUrl: toBase64(file),
               productId: product.id,
             },
           }),
@@ -63,6 +62,15 @@ export class ProductsService {
     }
 
     return this.findOne(product.id);
+  }
+
+  private mapImages(images: { id: number; imageUrl: string }[]) {
+    return images.map((img) => ({
+      ...img,
+      imageUrl: img.imageUrl?.startsWith('data:')
+        ? `/product-images/${img.id}`
+        : img.imageUrl,
+    }));
   }
 
   async findAll(query: QueryProductsDto): Promise<PaginatedResult<any>> {
@@ -83,7 +91,8 @@ export class ProductsService {
       }),
       this.prisma.product.count({ where }),
     ]);
-    return paginate(products, total, page, limit);
+    const mapped = products.map((p) => ({ ...p, images: this.mapImages(p.images) }));
+    return paginate(mapped, total, page, limit);
   }
 
   async findOne(id: number) {
@@ -92,7 +101,7 @@ export class ProductsService {
       include: { category: true, images: true },
     });
     if (!product) throw new NotFoundException('Product not found');
-    return product;
+    return { ...product, images: this.mapImages(product.images) };
   }
 
   async update(id: number, dto: UpdateProductDto, files?: Express.Multer.File[]) {
@@ -118,20 +127,12 @@ export class ProductsService {
     await this.prisma.product.update({ where: { id }, data });
 
     if (files && files.length > 0) {
-      const oldImages = await this.prisma.productImage.findMany({
-        where: { productId: id },
-      });
-      for (const img of oldImages) {
-        const filePath = path.join(process.cwd(), img.imageUrl);
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-      }
       await this.prisma.productImage.deleteMany({ where: { productId: id } });
-
       await Promise.all(
         files.map((file) =>
           this.prisma.productImage.create({
             data: {
-              imageUrl: `uploads/products/${file.filename}`,
+              imageUrl: toBase64(file),
               productId: id,
             },
           }),
@@ -146,14 +147,7 @@ export class ProductsService {
     const product = await this.prisma.product.findUnique({ where: { id } });
     if (!product) throw new NotFoundException('Product not found');
 
-    const images = await this.prisma.productImage.findMany({
-      where: { productId: id },
-    });
-    for (const img of images) {
-      const filePath = path.join(process.cwd(), img.imageUrl);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
-
+    await this.prisma.productImage.deleteMany({ where: { productId: id } });
     await this.prisma.product.delete({ where: { id } });
     return { message: 'Product deleted successfully' };
   }

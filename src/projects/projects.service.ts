@@ -1,11 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { QueryProjectsDto } from './dto/query-projects.dto';
 import { paginate, PaginatedResult } from '../common/interfaces/paginated-result.interface';
+import { toBase64 } from '../common/utils/file.util';
 import { Status } from '../../generated/prisma/client';
 
 @Injectable()
@@ -54,13 +53,22 @@ export class ProjectsService {
       await Promise.all(
         files.map((file) =>
           this.prisma.projectImage.create({
-            data: { imageUrl: `uploads/projects/${file.filename}`, projectId: project.id },
+            data: { imageUrl: toBase64(file), projectId: project.id },
           }),
         ),
       );
     }
 
     return this.findOne(project.id);
+  }
+
+  private mapImages(images: { id: number; imageUrl: string }[]) {
+    return images.map((img) => ({
+      ...img,
+      imageUrl: img.imageUrl?.startsWith('data:')
+        ? `/project-images/${img.id}`
+        : img.imageUrl,
+    }));
   }
 
   async findAll(query: QueryProjectsDto): Promise<PaginatedResult<any>> {
@@ -78,7 +86,8 @@ export class ProjectsService {
       }),
       this.prisma.project.count({ where }),
     ]);
-    return paginate(data, total, page, limit);
+    const mapped = data.map((p) => ({ ...p, images: this.mapImages(p.images) }));
+    return paginate(mapped, total, page, limit);
   }
 
   async findOne(id: number) {
@@ -87,7 +96,7 @@ export class ProjectsService {
       include: { category: true, client: true, images: true },
     });
     if (!project) throw new NotFoundException('Project not found');
-    return project;
+    return { ...project, images: this.mapImages(project.images) };
   }
 
   async update(id: number, dto: UpdateProjectDto, files?: Express.Multer.File[]) {
@@ -116,16 +125,11 @@ export class ProjectsService {
     await this.prisma.project.update({ where: { id }, data });
 
     if (files && files.length > 0) {
-      const oldImages = await this.prisma.projectImage.findMany({ where: { projectId: id } });
-      for (const img of oldImages) {
-        const filePath = path.join(process.cwd(), img.imageUrl);
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-      }
       await this.prisma.projectImage.deleteMany({ where: { projectId: id } });
       await Promise.all(
         files.map((file) =>
           this.prisma.projectImage.create({
-            data: { imageUrl: `uploads/projects/${file.filename}`, projectId: id },
+            data: { imageUrl: toBase64(file), projectId: id },
           }),
         ),
       );
@@ -138,12 +142,7 @@ export class ProjectsService {
     const project = await this.prisma.project.findUnique({ where: { id } });
     if (!project) throw new NotFoundException('Project not found');
 
-    const images = await this.prisma.projectImage.findMany({ where: { projectId: id } });
-    for (const img of images) {
-      const filePath = path.join(process.cwd(), img.imageUrl);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
-
+    await this.prisma.projectImage.deleteMany({ where: { projectId: id } });
     await this.prisma.project.delete({ where: { id } });
     return { message: 'Project deleted successfully' };
   }

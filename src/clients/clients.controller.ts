@@ -3,8 +3,7 @@ import {
   UseGuards, UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { memoryStorage } from 'multer';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -13,15 +12,13 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Public } from '../auth/decorators/public.decorator';
 import { Role } from '../../generated/prisma/client';
+import { toBase64 } from '../common/utils/file.util';
+
+const MAX_LOGO_SIZE = 10 * 1024 * 1024;
 
 const logoInterceptor = FileInterceptor('logo', {
-  storage: diskStorage({
-    destination: join(process.cwd(), 'uploads', 'clients'),
-    filename: (_req, file, cb) => {
-      const unique = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
-      cb(null, `${unique}${extname(file.originalname)}`);
-    },
-  }),
+  storage: memoryStorage(),
+  limits: { fileSize: MAX_LOGO_SIZE },
   fileFilter: (_req, file, cb) => {
     if (!file.mimetype.match(/^image\/(jpeg|png|gif|webp|svg\+xml)$/)) {
       return cb(new BadRequestException('Only image files are allowed (jpg, png, gif, webp, svg)'), false);
@@ -29,10 +26,6 @@ const logoInterceptor = FileInterceptor('logo', {
     cb(null, true);
   },
 });
-
-function logoPath(file: Express.Multer.File): string {
-  return `uploads/clients/${file.filename}`;
-}
 
 @Controller('clients')
 export class ClientsController {
@@ -58,7 +51,7 @@ export class ClientsController {
     @Body() dto: CreateClientDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    if (file) dto.logo = logoPath(file);
+    if (file) dto.logo = toBase64(file);
     return this.service.create(dto);
   }
 
@@ -71,7 +64,7 @@ export class ClientsController {
     @Body() dto: UpdateClientDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    if (file) dto.logo = logoPath(file);
+    if (file) dto.logo = toBase64(file);
     return this.service.update(id, dto);
   }
 
@@ -83,7 +76,7 @@ export class ClientsController {
     @Param('id', ParseIntPipe) id: number,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.service.updateLogo(id, logoPath(file));
+    return this.service.updateLogo(id, toBase64(file));
   }
 
   @Delete(':id/logo')
