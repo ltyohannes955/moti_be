@@ -521,6 +521,16 @@ async function main() {
     { name: 'Conferences', slug: 'conferences', description: 'Industry conferences and tech summits across Ethiopia' },
     { name: 'Projects', slug: 'projects', description: 'Project showcases, product launches, and team celebrations' },
     { name: 'Team Activities', slug: 'team-activities', description: 'Team building, outings, and social activities' },
+    { name: 'Product Photography', slug: 'product-photography', description: 'Professional product shots and solution mockups' },
+    { name: 'Training & Workshops', slug: 'training-workshops', description: 'Client training sessions and internal workshops' },
+    { name: 'Awards & Recognition', slug: 'awards-recognition', description: 'Industry awards, certifications, and team achievements' },
+    { name: 'Office Infrastructure', slug: 'office-infrastructure', description: 'Server rooms, networking gear, and office tech setup' },
+    { name: 'Community Outreach', slug: 'community-outreach', description: 'CSR activities, university visits, and community programs' },
+    { name: 'Client Visits', slug: 'client-visits', description: 'On-site visits to client offices and project sites' },
+    { name: 'Cultural Celebrations', slug: 'cultural-celebrations', description: 'Ethiopian holiday celebrations and cultural events at the office' },
+    { name: 'Design & Prototypes', slug: 'design-prototypes', description: 'UI/UX mockups, wireframes, and design prototypes' },
+    { name: 'Behind the Scenes', slug: 'behind-the-scenes', description: 'Development process, standups, and candid office moments' },
+    { name: 'Travel & Site Visits', slug: 'travel-site-visits', description: 'Travel photos from project sites and field deployments across Ethiopia' },
   ];
 
   const galleryCatMap = new Map();

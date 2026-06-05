@@ -35,10 +35,20 @@ export class GalleryCategoriesService {
     return paginate(data, total, page, limit);
   }
 
+  async findAllUnpaginated() {
+    return this.prisma.galleryCategory.findMany({
+      include: { _count: { select: { images: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findOne(id: number) {
     const cat = await this.prisma.galleryCategory.findUnique({
       where: { id },
-      include: { images: true },
+      include: {
+        images: true,
+        _count: { select: { images: true } },
+      },
     });
     if (!cat) throw new NotFoundException('Category not found');
     cat.images = cat.images.map((img) => {

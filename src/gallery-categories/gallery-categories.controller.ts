@@ -17,6 +17,10 @@ export class GalleryCategoriesController {
   findAll(@Query() query: PaginationQueryDto) { return this.service.findAll(query); }
 
   @Public()
+  @Get('all')
+  findAllUnpaginated() { return this.service.findAllUnpaginated(); }
+
+  @Public()
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) { return this.service.findOne(id); }
 
