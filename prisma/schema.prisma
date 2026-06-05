@@ -58,6 +58,51 @@ enum BlogPostType {
   NEWS
 }
 
+enum ProcessingMethod {
+  WASHED
+  NATURAL
+  HONEY
+  SEMI_WASHED
+  WET_HULLED
+}
+
+enum AcidityLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum BodyLevel {
+  FULL
+  MEDIUM
+  LIGHT
+  LIGHT_TO_MEDIUM
+  MEDIUM_TO_FULL
+  DELICATE
+  CREAMY
+}
+
+enum HarvestMonth {
+  JANUARY
+  FEBRUARY
+  MARCH
+  APRIL
+  MAY
+  JUNE
+  JULY
+  AUGUST
+  SEPTEMBER
+  OCTOBER
+  NOVEMBER
+  DECEMBER
+}
+
+enum CoffeeGradeStatus {
+  AVAILABLE
+  COMING_SOON
+  UNAVAILABLE
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -257,16 +302,44 @@ model BlogPostTag {
 }
 
 model CoffeeType {
-  id          Int      @id @default(autoincrement())
-  name        String
-  slug        String   @unique
-  origin      String
+  id            Int               @id @default(autoincrement())
+  name          String
+  slug          String            @unique
+  origin        String
+  grade         String
+  description   String?
+  imageUrl      String?
+  altitude      String?
+  processing    ProcessingMethod?
+  acidity       AcidityLevel?
+  body          BodyLevel?
+  harvestSeason HarvestMonth[]
+  tastingNotes  String[]
+  badgeText     String?
+  status        Status            @default(ACTIVE)
+  grades        CoffeeTypeGrade[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model CoffeeGrade {
+  id          Int               @id @default(autoincrement())
   grade       String
-  description String?
-  imageUrl    String?
-  status      Status   @default(ACTIVE)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  qualityLevel String
+  defects     String
+  status      CoffeeGradeStatus @default(AVAILABLE)
+  coffeeTypes CoffeeTypeGrade[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model CoffeeTypeGrade {
+  coffeeTypeId  Int
+  coffeeType    CoffeeType  @relation(fields: [coffeeTypeId], references: [id], onDelete: Cascade)
+  coffeeGradeId Int
+  coffeeGrade   CoffeeGrade @relation(fields: [coffeeGradeId], references: [id], onDelete: Cascade)
+
+  @@id([coffeeTypeId, coffeeGradeId])
 }
 
 model Testimonial {
@@ -313,4 +386,22 @@ model GalleryImage {
   category    GalleryCategory @relation(fields: [categoryId], references: [id])
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+}
+
+model Setting {
+  id                 Int       @id @default(autoincrement())
+  siteName           String    @default("")
+  siteDescription    String    @default("")
+  maintenanceMode    Boolean   @default(false)
+  maintenanceMessage String    @default("")
+  estimatedEndTime   DateTime?
+  email              String    @default("")
+  phone              String    @default("")
+  address            String    @default("")
+  facebook           String    @default("")
+  linkedIn           String    @default("")
+  twitter            String    @default("")
+  instagram          String    @default("")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }

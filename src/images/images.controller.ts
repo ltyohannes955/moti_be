@@ -47,6 +47,14 @@ export class ImagesController {
     this.sendImage(img.imageUrl, res);
   }
 
+  @Public()
+  @Get('coffee-types/:id/image')
+  async coffeeTypeImage(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
+    const ct = await this.prisma.coffeeType.findUnique({ where: { id } });
+    if (!ct?.imageUrl) throw new NotFoundException();
+    this.sendImage(ct.imageUrl, res);
+  }
+
   private sendImage(dataUri: string, res: Response) {
     const matches = dataUri.match(/^data:(image\/\w+);base64,(.+)$/);
     if (!matches) throw new BadRequestException('Invalid image data');

@@ -484,34 +484,99 @@ async function main() {
     console.log('  CREATED:', t.name, '-', t.company);
   }
 
+  console.log('\n--- Seeding Coffee Grades ---');
+  const coffeeGrades = [
+    { grade: 'Grade 1', qualityLevel: 'Specialty', defects: '0-3 per 300g', status: 'AVAILABLE' },
+    { grade: 'Grade 2', qualityLevel: 'Specialty', defects: '4-12 per 300g', status: 'AVAILABLE' },
+    { grade: 'Grade 3', qualityLevel: 'Premium Commercial', defects: '13-25 per 300g', status: 'AVAILABLE' },
+    { grade: 'Grade 4', qualityLevel: 'Commercial', defects: '26-45 per 300g', status: 'COMING_SOON' },
+    { grade: 'Grade 5', qualityLevel: 'Commercial', defects: '46-60 per 300g', status: 'UNAVAILABLE' },
+    { grade: 'Premium Select', qualityLevel: 'Specialty', defects: '0-2 per 300g', status: 'AVAILABLE' },
+  ];
+
+  const coffeeGradeIds: number[] = [];
+  for (const cg of coffeeGrades) {
+    const existing = await prisma.coffeeGrade.findFirst({ where: { grade: cg.grade } });
+    if (existing) {
+      coffeeGradeIds.push(existing.id);
+      console.log('  EXISTS:', cg.grade);
+    } else {
+      const created = await prisma.coffeeGrade.create({ data: cg });
+      coffeeGradeIds.push(created.id);
+      console.log('  CREATED:', cg.grade);
+    }
+  }
+
+  // Map grade names to their IDs for easy reference
+  const gradeMap = new Map();
+  const allGrades = await prisma.coffeeGrade.findMany();
+  for (const g of allGrades) {
+    gradeMap.set(g.grade, g.id);
+  }
+
   console.log('\n--- Seeding Coffee Types ---');
   const coffeeTypes = [
-    { name: 'Yirgacheffe Premium', origin: 'Yirgacheffe, Gedeo Zone', grade: 'Grade 1', description: 'Bright acidity with floral and citrus notes. Washed processing produces a clean, complex cup with jasmine aroma and lemon zest finish.' },
-    { name: 'Sidamo Single Origin', origin: 'Sidamo, Southern Nations', grade: 'Grade 2', description: 'Medium-bodied with wine-like acidity. Notes of blueberry, dark chocolate, and spice. Sundried natural processing for rich berry flavors.' },
-    { name: 'Harrar Wild', origin: 'Harrar, Eastern Ethiopia', grade: 'Grade 1', description: 'Full-bodied with intense blueberry and mocha notes. Dry-processed under the Ethiopian sun for a bold, fruity cup with low acidity.' },
-    { name: 'Limu Washed', origin: 'Limu, Oromia Region', grade: 'Grade 2', description: 'Well-balanced with medium body and winy acidity. Floral aroma with hints of spice and cocoa. Perfect for espresso blends.' },
-    { name: 'Jimma Forest', origin: 'Jimma, Oromia Region', grade: 'Grade 3', description: 'Earthy and full-bodied with low acidity. Notes of dark chocolate and tobacco. Excellent base for traditional Ethiopian coffee ceremony blends.' },
-    { name: 'Lekempti Bold', origin: 'Lekempti, Wollega', grade: 'Grade 2', description: 'Smooth with medium acidity and fruity undertones. Notes of stone fruit and caramel. Grown at altitudes of 1,500-1,800 meters.' },
-    { name: 'Bebeka Estate', origin: 'Bebeka, Bench Maji', grade: 'Grade 1', description: 'One of Ethiopia\'s largest coffee plantations. Light-bodied with delicate floral notes and honey sweetness. Rainforest Alliance certified.' },
-    { name: 'Tepi Plantation', origin: 'Tepi, Sheka Zone', grade: 'Grade 2', description: 'Medium-bodied with balanced acidity and clean finish. Notes of milk chocolate and roasted nuts. Shade-grown under native forest canopy.' },
+    { name: 'Yirgacheffe Premium', origin: 'Yirgacheffe, Gedeo Zone', grade: 'Grade 1', description: 'Bright acidity with floral and citrus notes. Washed processing produces a clean, complex cup with jasmine aroma and lemon zest finish.', altitude: '1800-2200m', processing: 'WASHED', acidity: 'HIGH', body: 'LIGHT', harvestSeason: ['OCTOBER', 'NOVEMBER', 'DECEMBER'], tastingNotes: ['Jasmine', 'Lemon', 'Bergamot', 'Honey'], badgeText: 'Best Seller', gradeNames: ['Grade 1', 'Premium Select'] },
+    { name: 'Sidamo Single Origin', origin: 'Sidamo, Southern Nations', grade: 'Grade 2', description: 'Medium-bodied with wine-like acidity. Notes of blueberry, dark chocolate, and spice. Sundried natural processing for rich berry flavors.', altitude: '1600-2000m', processing: 'NATURAL', acidity: 'MEDIUM', body: 'MEDIUM', harvestSeason: ['NOVEMBER', 'DECEMBER', 'JANUARY'], tastingNotes: ['Blueberry', 'Dark Chocolate', 'Spice', 'Wine'], badgeText: 'Popular', gradeNames: ['Grade 2', 'Grade 3'] },
+    { name: 'Harrar Wild', origin: 'Harrar, Eastern Ethiopia', grade: 'Grade 1', description: 'Full-bodied with intense blueberry and mocha notes. Dry-processed under the Ethiopian sun for a bold, fruity cup with low acidity.', altitude: '1500-1800m', processing: 'NATURAL', acidity: 'LOW', body: 'FULL', harvestSeason: ['OCTOBER', 'NOVEMBER', 'DECEMBER', 'JANUARY'], tastingNotes: ['Blueberry', 'Mocha', 'Fruit', 'Wine'], badgeText: 'Limited Edition', gradeNames: ['Grade 1', 'Premium Select'] },
+    { name: 'Limu Washed', origin: 'Limu, Oromia Region', grade: 'Grade 2', description: 'Well-balanced with medium body and winy acidity. Floral aroma with hints of spice and cocoa. Perfect for espresso blends.', altitude: '1700-2000m', processing: 'WASHED', acidity: 'MEDIUM', body: 'MEDIUM', harvestSeason: ['NOVEMBER', 'DECEMBER', 'JANUARY'], tastingNotes: ['Floral', 'Spice', 'Cocoa', 'Citrus'], badgeText: 'Espresso Blend', gradeNames: ['Grade 2', 'Grade 3'] },
+    { name: 'Jimma Forest', origin: 'Jimma, Oromia Region', grade: 'Grade 3', description: 'Earthy and full-bodied with low acidity. Notes of dark chocolate and tobacco. Excellent base for traditional Ethiopian coffee ceremony blends.', altitude: '1400-1700m', processing: 'SEMI_WASHED', acidity: 'LOW', body: 'FULL', harvestSeason: ['DECEMBER', 'JANUARY', 'FEBRUARY'], tastingNotes: ['Dark Chocolate', 'Tobacco', 'Earthy', 'Nuts'], badgeText: 'Traditional', gradeNames: ['Grade 3', 'Grade 4'] },
+    { name: 'Lekempti Bold', origin: 'Lekempti, Wollega', grade: 'Grade 2', description: 'Smooth with medium acidity and fruity undertones. Notes of stone fruit and caramel. Grown at altitudes of 1,500-1,800 meters.', altitude: '1500-1800m', processing: 'HONEY', acidity: 'MEDIUM', body: 'MEDIUM_TO_FULL', harvestSeason: ['JANUARY', 'FEBRUARY', 'MARCH'], tastingNotes: ['Stone Fruit', 'Caramel', 'Honey', 'Apricot'], badgeText: null, gradeNames: ['Grade 2'] },
+    { name: 'Bebeka Estate', origin: 'Bebeka, Bench Maji', grade: 'Grade 1', description: 'One of Ethiopia\'s largest coffee plantations. Light-bodied with delicate floral notes and honey sweetness. Rainforest Alliance certified.', altitude: '1200-1500m', processing: 'WASHED', acidity: 'HIGH', body: 'LIGHT_TO_MEDIUM', harvestSeason: ['OCTOBER', 'NOVEMBER', 'DECEMBER'], tastingNotes: ['Floral', 'Honey', 'Tea', 'Citrus'], badgeText: 'Organic Certified', gradeNames: ['Grade 1', 'Premium Select'] },
+    { name: 'Tepi Plantation', origin: 'Tepi, Sheka Zone', grade: 'Grade 2', description: 'Medium-bodied with balanced acidity and clean finish. Notes of milk chocolate and roasted nuts. Shade-grown under native forest canopy.', altitude: '1300-1600m', processing: 'WET_HULLED', acidity: 'MEDIUM', body: 'MEDIUM', harvestSeason: ['NOVEMBER', 'DECEMBER', 'JANUARY', 'FEBRUARY'], tastingNotes: ['Milk Chocolate', 'Roasted Nuts', 'Clean', 'Balanced'], badgeText: 'Shade Grown', gradeNames: ['Grade 2', 'Grade 3'] },
   ];
 
   for (const ct of coffeeTypes) {
     const slug = ct.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const existing = await prisma.coffeeType.findUnique({ where: { slug } });
-    if (existing) {
-      console.log('  EXISTS:', ct.name);
-      continue;
-    }
     const encoded = encodeURIComponent(ct.name);
-    await prisma.coffeeType.create({
-      data: {
-        name: ct.name, slug, origin: ct.origin, grade: ct.grade,
-        description: ct.description, status: 'ACTIVE',
-        imageUrl: `https://placehold.co/600x400/4E342E/white?text=${encoded}`,
-      },
-    });
-    console.log('  CREATED:', ct.name);
+    const gradeIds = ct.gradeNames.map((gn) => gradeMap.get(gn)).filter(Boolean);
+
+    if (existing) {
+      await prisma.coffeeType.update({
+        where: { id: existing.id },
+        data: {
+          altitude: ct.altitude,
+          processing: ct.processing,
+          acidity: ct.acidity,
+          body: ct.body,
+          harvestSeason: ct.harvestSeason,
+          tastingNotes: ct.tastingNotes,
+          badgeText: ct.badgeText,
+          imageUrl: existing.imageUrl || `https://placehold.co/600x400/4E342E/white?text=${encoded}`,
+        },
+      });
+      const existingGradeIds = await prisma.coffeeTypeGrade.findMany({
+        where: { coffeeTypeId: existing.id },
+      });
+      const currentIds = existingGradeIds.map((g) => g.coffeeGradeId);
+      const missingIds = gradeIds.filter((id) => !currentIds.includes(id));
+      if (missingIds.length > 0) {
+        await prisma.coffeeTypeGrade.createMany({
+          data: missingIds.map((id) => ({ coffeeTypeId: existing.id, coffeeGradeId: id })),
+        });
+      }
+      console.log('  UPDATED:', ct.name);
+    } else {
+      await prisma.coffeeType.create({
+        data: {
+          name: ct.name, slug, origin: ct.origin, grade: ct.grade,
+          description: ct.description, status: 'ACTIVE',
+          imageUrl: `https://placehold.co/600x400/4E342E/white?text=${encoded}`,
+          altitude: ct.altitude,
+          processing: ct.processing,
+          acidity: ct.acidity,
+          body: ct.body,
+          harvestSeason: ct.harvestSeason,
+          tastingNotes: ct.tastingNotes,
+          badgeText: ct.badgeText,
+          grades: {
+            create: gradeIds.map((id) => ({ coffeeGradeId: id })),
+          },
+        },
+      });
+      console.log('  CREATED:', ct.name);
+    }
   }
 
   console.log('\n--- Seeding Gallery Categories ---');

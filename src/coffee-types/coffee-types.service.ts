@@ -1,6 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCoffeeTypeDto } from './dto/create-coffee-type.dto';
 import { UpdateCoffeeTypeDto } from './dto/update-coffee-type.dto';
@@ -16,15 +14,40 @@ export class CoffeeTypesService {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
 
-  async create(dto: CreateCoffeeTypeDto, file?: Express.Multer.File) {
+  private mapImage(ct: any) {
+    if (ct.imageUrl?.startsWith('data:')) {
+      ct.imageUrl = `/coffee-types/${ct.id}/image`;
+    }
+    return ct;
+  }
+
+  async create(dto: CreateCoffeeTypeDto) {
     const slug = this.toSlug(dto.name);
-    return this.prisma.coffeeType.create({
-      data: {
-        name: dto.name, slug, origin: dto.origin, grade: dto.grade,
-        description: dto.description, status: dto.status ?? Status.ACTIVE,
-        imageUrl: file ? `uploads/coffee-types/${file.filename}` : null,
-      },
+    const data: Record<string, unknown> = {
+      name: dto.name, slug, origin: dto.origin, grade: dto.grade,
+      description: dto.description, status: dto.status ?? Status.ACTIVE,
+      imageUrl: dto.imageUrl ?? null,
+      altitude: dto.altitude,
+      processing: dto.processing,
+      acidity: dto.acidity,
+      body: dto.body,
+      harvestSeason: dto.harvestSeason ?? [],
+      tastingNotes: dto.tastingNotes ?? [],
+      badgeText: dto.badgeText,
+    };
+
+    if (dto.gradeIds?.length) {
+      data.grades = {
+        create: dto.gradeIds.map((id: number) => ({ coffeeGradeId: id })),
+      };
+    }
+
+    const ct = await this.prisma.coffeeType.create({
+      data: data as any,
+      include: { grades: { include: { coffeeGrade: true } } },
     });
+
+    return this.mapImage(ct);
   }
 
   async findAllActive(query: QueryCoffeeTypesDto) {
@@ -37,19 +60,25 @@ export class CoffeeTypesService {
     if (status) where.status = status;
     const orderBy: Record<string, string> = sort === 'oldest' ? { createdAt: 'asc' } : { createdAt: 'desc' };
     const [data, total] = await Promise.all([
-      this.prisma.coffeeType.findMany({ where, orderBy, skip: (page - 1) * limit, take: limit }),
+      this.prisma.coffeeType.findMany({
+        where, orderBy, skip: (page - 1) * limit, take: limit,
+        include: { grades: { include: { coffeeGrade: true } } },
+      }),
       this.prisma.coffeeType.count({ where }),
     ]);
-    return paginate(data, total, page, limit);
+    return paginate(data.map((ct) => this.mapImage(ct)), total, page, limit);
   }
 
   async findOne(id: number) {
-    const ct = await this.prisma.coffeeType.findUnique({ where: { id } });
+    const ct = await this.prisma.coffeeType.findUnique({
+      where: { id },
+      include: { grades: { include: { coffeeGrade: true } } },
+    });
     if (!ct) throw new NotFoundException('Coffee type not found');
-    return ct;
+    return this.mapImage(ct);
   }
 
-  async update(id: number, dto: UpdateCoffeeTypeDto, file?: Express.Multer.File) {
+  async update(id: number, dto: UpdateCoffeeTypeDto) {
     const ct = await this.prisma.coffeeType.findUnique({ where: { id } });
     if (!ct) throw new NotFoundException('Coffee type not found');
 
@@ -58,26 +87,37 @@ export class CoffeeTypesService {
     if (dto.origin !== undefined) data.origin = dto.origin;
     if (dto.grade !== undefined) data.grade = dto.grade;
     if (dto.description !== undefined) data.description = dto.description;
+    if (dto.imageUrl !== undefined) data.imageUrl = dto.imageUrl;
+    if (dto.altitude !== undefined) data.altitude = dto.altitude;
+    if (dto.processing !== undefined) data.processing = dto.processing;
+    if (dto.acidity !== undefined) data.acidity = dto.acidity;
+    if (dto.body !== undefined) data.body = dto.body;
+    if (dto.harvestSeason !== undefined) data.harvestSeason = dto.harvestSeason;
+    if (dto.tastingNotes !== undefined) data.tastingNotes = dto.tastingNotes;
+    if (dto.badgeText !== undefined) data.badgeText = dto.badgeText;
     if (dto.status !== undefined) data.status = dto.status;
 
-    if (file) {
-      if (ct.imageUrl) {
-        const oldPath = path.join(process.cwd(), ct.imageUrl);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    if (dto.gradeIds !== undefined) {
+      await this.prisma.coffeeTypeGrade.deleteMany({ where: { coffeeTypeId: id } });
+      if (dto.gradeIds.length > 0) {
+        data.grades = {
+          create: dto.gradeIds.map((gid: number) => ({ coffeeGradeId: gid })),
+        };
       }
-      data.imageUrl = `uploads/coffee-types/${file.filename}`;
     }
 
-    return this.prisma.coffeeType.update({ where: { id }, data });
+    await this.prisma.coffeeType.update({
+      where: { id },
+      data: data as any,
+    });
+
+    return this.findOne(id);
   }
 
   async delete(id: number) {
     const ct = await this.prisma.coffeeType.findUnique({ where: { id } });
     if (!ct) throw new NotFoundException('Coffee type not found');
-    if (ct.imageUrl) {
-      const filePath = path.join(process.cwd(), ct.imageUrl);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
-    return this.prisma.coffeeType.delete({ where: { id } });
+    await this.prisma.coffeeType.delete({ where: { id } });
+    return { message: 'Coffee type deleted successfully' };
   }
 }

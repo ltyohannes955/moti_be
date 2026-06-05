@@ -17,12 +17,14 @@ import { ContactMessagesModule } from './contact-messages/contact-messages.modul
 import { CareersModule } from './careers/careers.module';
 import { TestimonialsModule } from './testimonials/testimonials.module';
 import { CoffeeTypesModule } from './coffee-types/coffee-types.module';
+import { CoffeeGradesModule } from './coffee-grades/coffee-grades.module';
 import { ClientsModule } from './clients/clients.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { TeamModule } from './team/team.module';
 import { ImagesModule } from './images/images.module';
 import { GalleryCategoriesModule } from './gallery-categories/gallery-categories.module';
 import { GalleryImagesModule } from './gallery-images/gallery-images.module';
+import { SettingsModule } from './settings/settings.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -49,12 +51,14 @@ import { AppService } from './app.service';
     CareersModule,
     TestimonialsModule,
     CoffeeTypesModule,
+    CoffeeGradesModule,
     ClientsModule,
     DepartmentsModule,
     TeamModule,
     ImagesModule,
     GalleryCategoriesModule,
     GalleryImagesModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [

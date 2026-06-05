@@ -3,8 +3,7 @@ import {
   UseGuards, UseInterceptors, UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { memoryStorage } from 'multer';
 import { CoffeeTypesService } from './coffee-types.service';
 import { CreateCoffeeTypeDto } from './dto/create-coffee-type.dto';
 import { UpdateCoffeeTypeDto } from './dto/update-coffee-type.dto';
@@ -13,22 +12,20 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Public } from '../auth/decorators/public.decorator';
 import { Role } from '../../generated/prisma/client';
+import { toBase64 } from '../common/utils/file.util';
 
-const multerOptions = {
-  storage: diskStorage({
-    destination: join(process.cwd(), 'uploads', 'coffee-types'),
-    filename: (_req, file, cb) => {
-      const unique = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
-      cb(null, `${unique}${extname(file.originalname)}`);
-    },
-  }),
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+
+const imageInterceptor = FileInterceptor('image', {
+  storage: memoryStorage(),
+  limits: { fileSize: MAX_IMAGE_SIZE },
   fileFilter: (_req, file, cb) => {
     if (!file.mimetype.match(/^image\/(jpeg|png|gif|webp)$/)) {
       return cb(new Error('Only image files are allowed'), false);
     }
     cb(null, true);
   },
-};
+});
 
 @Controller('coffee-types')
 export class CoffeeTypesController {
@@ -45,21 +42,26 @@ export class CoffeeTypesController {
   @Post()
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @UseGuards(RolesGuard)
-  @UseInterceptors(FileInterceptor('image', multerOptions))
-  create(@Body() dto: CreateCoffeeTypeDto, @UploadedFile() file?: Express.Multer.File) {
-    return this.service.create(dto, file);
+  @UseInterceptors(imageInterceptor)
+  create(
+    @Body() dto: CreateCoffeeTypeDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    if (file) dto.imageUrl = toBase64(file);
+    return this.service.create(dto);
   }
 
   @Patch(':id')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @UseGuards(RolesGuard)
-  @UseInterceptors(FileInterceptor('image', multerOptions))
+  @UseInterceptors(imageInterceptor)
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCoffeeTypeDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.service.update(id, dto, file);
+    if (file) dto.imageUrl = toBase64(file);
+    return this.service.update(id, dto);
   }
 
   @Delete(':id')
