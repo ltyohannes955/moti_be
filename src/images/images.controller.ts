@@ -39,6 +39,14 @@ export class ImagesController {
     this.sendImage(org.logo, res);
   }
 
+  @Public()
+  @Get('gallery-images/:id')
+  async galleryImage(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
+    const img = await this.prisma.galleryImage.findUnique({ where: { id } });
+    if (!img?.imageUrl) throw new NotFoundException();
+    this.sendImage(img.imageUrl, res);
+  }
+
   private sendImage(dataUri: string, res: Response) {
     const matches = dataUri.match(/^data:(image\/\w+);base64,(.+)$/);
     if (!matches) throw new BadRequestException('Invalid image data');

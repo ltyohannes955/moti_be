@@ -514,6 +514,67 @@ async function main() {
     console.log('  CREATED:', ct.name);
   }
 
+  console.log('\n--- Seeding Gallery Categories ---');
+  const galleryCategories = [
+    { name: 'Events', slug: 'events', description: 'Photos from company events, conferences, and meetups' },
+    { name: 'Office Life', slug: 'office-life', description: 'Behind-the-scenes from our offices in Addis Ababa' },
+    { name: 'Conferences', slug: 'conferences', description: 'Industry conferences and tech summits across Ethiopia' },
+    { name: 'Projects', slug: 'projects', description: 'Project showcases, product launches, and team celebrations' },
+    { name: 'Team Activities', slug: 'team-activities', description: 'Team building, outings, and social activities' },
+  ];
+
+  const galleryCatMap = new Map();
+  for (const cat of galleryCategories) {
+    const existing = await prisma.galleryCategory.findUnique({ where: { slug: cat.slug } });
+    if (existing) {
+      galleryCatMap.set(cat.slug, existing);
+      console.log('  EXISTS:', cat.name);
+    } else {
+      const created = await prisma.galleryCategory.create({ data: cat });
+      galleryCatMap.set(cat.slug, created);
+      console.log('  CREATED:', cat.name);
+    }
+  }
+
+  console.log('\n--- Seeding Gallery Images ---');
+  const galleryImages = [
+    { title: 'Annual Tech Conference 2026 Keynote', categorySlug: 'events', description: 'CEO delivering keynote at the Annual Tech Conference in Addis Ababa', imgUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop' },
+    { title: 'Team Hackathon Night', categorySlug: 'events', description: 'Developers collaborating during the 48-hour internal hackathon', imgUrl: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=600&fit=crop' },
+    { title: 'Partner Meetup 2026', categorySlug: 'events', description: 'Annual partner meetup with clients and industry leaders', imgUrl: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&h=600&fit=crop' },
+    { title: 'Addis Office Main Lobby', categorySlug: 'office-life', description: 'Modern office lobby at our Bole headquarters', imgUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop' },
+    { title: 'Open Workspace Area', categorySlug: 'office-life', description: 'Collaborative open workspace used by engineering teams', imgUrl: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&h=600&fit=crop' },
+    { title: 'Meeting Room with Ethiopian Art', categorySlug: 'office-life', description: 'Meeting room decorated with traditional Ethiopian art', imgUrl: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=600&fit=crop' },
+    { title: 'Ethiopia Digital Finance Summit 2026', categorySlug: 'conferences', description: 'Moti Engineering exhibiting at the Digital Finance Summit', imgUrl: 'https://images.unsplash.com/photo-1560523159-4a9692d222ef?w=800&h=600&fit=crop' },
+    { title: 'East Africa Tech Expo Panel', categorySlug: 'conferences', description: 'Panel discussion on fintech innovation in East Africa', imgUrl: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&h=600&fit=crop' },
+    { title: 'Product Launch Dashboard Reveal', categorySlug: 'projects', description: 'Team celebrating the launch of the new analytics dashboard', imgUrl: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800&h=600&fit=crop' },
+    { title: 'Project Kickoff Whiteboard Session', categorySlug: 'projects', description: 'Whiteboard brainstorming for a new banking client project', imgUrl: 'https://images.unsplash.com/photo-1577412647305-991150c7d163?w=800&h=600&fit=crop' },
+    { title: 'Team Building at Entoto Park', categorySlug: 'team-activities', description: 'Annual team building day trip to Entoto Natural Park', imgUrl: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=600&fit=crop' },
+    { title: 'Friday Lunch Together', categorySlug: 'team-activities', description: 'Weekly team lunch celebrating Ethiopian cuisine', imgUrl: 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=800&h=600&fit=crop' },
+  ];
+
+  for (const img of galleryImages) {
+    const slug = img.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').substring(0, 60);
+    const existing = await prisma.galleryImage.findFirst({
+      where: { slug, categoryId: galleryCatMap.get(img.categorySlug).id },
+    });
+    if (existing) {
+      console.log('  EXISTS:', img.title);
+      continue;
+    }
+    const category = galleryCatMap.get(img.categorySlug);
+    await prisma.galleryImage.create({
+      data: {
+        title: img.title,
+        slug: `${slug}-${Date.now()}`,
+        imageUrl: img.imgUrl,
+        description: img.description,
+        categoryId: category.id,
+        status: 'ACTIVE',
+      },
+    });
+    console.log('  CREATED:', img.title);
+  }
+
   console.log('\n--- Seed Complete ---');
   await prisma.$disconnect();
 }

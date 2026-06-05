@@ -21,6 +21,8 @@ import { ClientsModule } from './clients/clients.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { TeamModule } from './team/team.module';
 import { ImagesModule } from './images/images.module';
+import { GalleryCategoriesModule } from './gallery-categories/gallery-categories.module';
+import { GalleryImagesModule } from './gallery-images/gallery-images.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -51,6 +53,8 @@ import { AppService } from './app.service';
     DepartmentsModule,
     TeamModule,
     ImagesModule,
+    GalleryCategoriesModule,
+    GalleryImagesModule,
   ],
   controllers: [AppController],
   providers: [

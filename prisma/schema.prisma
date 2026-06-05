@@ -291,3 +291,26 @@ model ContactMessage {
   status      ContactStatus  @default(NEW)
   createdAt   DateTime       @default(now())
 }
+
+model GalleryCategory {
+  id          Int            @id @default(autoincrement())
+  name        String
+  slug        String         @unique
+  description String?
+  images      GalleryImage[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model GalleryImage {
+  id          Int             @id @default(autoincrement())
+  title       String
+  slug        String          @unique
+  imageUrl    String
+  description String?
+  status      Status          @default(ACTIVE)
+  categoryId  Int
+  category    GalleryCategory @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
