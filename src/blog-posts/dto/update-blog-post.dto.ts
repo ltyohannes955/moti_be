@@ -1,6 +1,6 @@
 import { IsString, IsOptional, MinLength, IsInt, IsEnum } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { Status } from '../../../generated/prisma/client';
+import { Status, BlogPostType } from '../../../generated/prisma/client';
 
 export class UpdateBlogPostDto {
   @IsOptional()
@@ -15,6 +15,10 @@ export class UpdateBlogPostDto {
   @IsOptional()
   @IsString()
   content?: string;
+
+  @IsOptional()
+  @IsEnum(BlogPostType)
+  type?: BlogPostType;
 
   @IsOptional()
   @IsEnum(Status)

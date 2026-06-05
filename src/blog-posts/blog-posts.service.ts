@@ -51,6 +51,7 @@ export class BlogPostsService {
         content: dto.content,
         excerpt: dto.excerpt,
         imageUrl: file ? `uploads/blog-posts/${file.filename}` : null,
+        type: dto.type ?? 'BLOG',
         status: dto.status ?? Status.ACTIVE,
         categories: dto.categoryIds?.length
           ? { create: dto.categoryIds.map((id) => ({ categoryId: id })) }
@@ -65,8 +66,9 @@ export class BlogPostsService {
   }
 
   async findAll(query: QueryBlogPostsDto): Promise<PaginatedResult<any>> {
-    const { page = 1, limit = 10, sort = 'newest', categoryId, tagId, status, search } = query;
+    const { page = 1, limit = 10, sort = 'newest', categoryId, tagId, type, status, search } = query;
     const where: Record<string, unknown> = {};
+    if (type) where.type = type;
     if (status) where.status = status;
     if (categoryId) where.categories = { some: { categoryId } };
     if (tagId) where.tags = { some: { tagId } };
@@ -119,6 +121,7 @@ export class BlogPostsService {
     if (dto.title !== undefined) { data.title = dto.title; data.slug = await this.generateUniqueSlug(dto.title); }
     if (dto.excerpt !== undefined) data.excerpt = dto.excerpt;
     if (dto.content !== undefined) data.content = dto.content;
+    if (dto.type !== undefined) data.type = dto.type;
     if (dto.status !== undefined) data.status = dto.status;
 
     if (file) {

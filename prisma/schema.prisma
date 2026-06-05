@@ -53,6 +53,11 @@ enum ApplicationStatus {
   REJECTED
 }
 
+enum BlogPostType {
+  BLOG
+  NEWS
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -206,6 +211,7 @@ model BlogPost {
   excerpt    String?
   imageUrl   String?
   author     String?
+  type       BlogPostType        @default(BLOG)
   status     Status              @default(ACTIVE)
   categories BlogPostCategory[]
   tags       BlogPostTag[]

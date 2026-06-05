@@ -1,7 +1,7 @@
 import { IsOptional, IsEnum, IsInt, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaginationQueryDto } from '../../common/dto/pagination.dto';
-import { Status } from '../../../generated/prisma/client';
+import { Status, BlogPostType } from '../../../generated/prisma/client';
 
 export class QueryBlogPostsDto extends PaginationQueryDto {
   @IsOptional()
@@ -13,6 +13,10 @@ export class QueryBlogPostsDto extends PaginationQueryDto {
   @Type(() => Number)
   @IsInt()
   tagId?: number;
+
+  @IsOptional()
+  @IsEnum(BlogPostType)
+  type?: BlogPostType;
 
   @IsOptional()
   @IsEnum(Status)
