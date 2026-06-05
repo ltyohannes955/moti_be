@@ -66,12 +66,12 @@ export class BlogPostsService {
   }
 
   async findAll(query: QueryBlogPostsDto): Promise<PaginatedResult<any>> {
-    const { page = 1, limit = 10, sort = 'newest', categoryId, tagId, type, status, search } = query;
+    const { page = 1, limit = 10, sort = 'newest', categoryIds, tagIds, type, status, search } = query;
     const where: Record<string, unknown> = {};
     if (type) where.type = type;
     if (status) where.status = status;
-    if (categoryId) where.categories = { some: { categoryId } };
-    if (tagId) where.tags = { some: { tagId } };
+    if (categoryIds?.length) where.categories = { some: { categoryId: { in: categoryIds } } };
+    if (tagIds?.length) where.tags = { some: { tagId: { in: tagIds } } };
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },

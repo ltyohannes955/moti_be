@@ -1,18 +1,28 @@
-import { IsOptional, IsEnum, IsInt, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsEnum, IsInt, IsString, IsArray } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 import { Status, BlogPostType } from '../../../generated/prisma/client';
 
 export class QueryBlogPostsDto extends PaginationQueryDto {
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  categoryId?: number;
+  @Transform(({ value }) => {
+    if (value == null) return undefined;
+    if (typeof value === 'string') return value.split(',').map(Number);
+    if (Array.isArray(value)) return value.map(Number);
+    return [Number(value)];
+  })
+  @IsInt({ each: true })
+  categoryIds?: number[];
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  tagId?: number;
+  @Transform(({ value }) => {
+    if (value == null) return undefined;
+    if (typeof value === 'string') return value.split(',').map(Number);
+    if (Array.isArray(value)) return value.map(Number);
+    return [Number(value)];
+  })
+  @IsInt({ each: true })
+  tagIds?: number[];
 
   @IsOptional()
   @IsEnum(BlogPostType)
