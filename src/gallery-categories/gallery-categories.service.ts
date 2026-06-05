@@ -41,6 +41,12 @@ export class GalleryCategoriesService {
       include: { images: true },
     });
     if (!cat) throw new NotFoundException('Category not found');
+    cat.images = cat.images.map((img) => {
+      if (img.imageUrl?.startsWith('data:')) {
+        img.imageUrl = `/gallery-images/${img.id}`;
+      }
+      return img;
+    });
     return cat;
   }
 
