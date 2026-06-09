@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCoffeeTypeDto } from './dto/create-coffee-type.dto';
 import { UpdateCoffeeTypeDto } from './dto/update-coffee-type.dto';
@@ -21,8 +21,20 @@ export class CoffeeTypesService {
     return ct;
   }
 
+  private async generateUniqueSlug(base: string): Promise<string> {
+    let slug = this.toSlug(base);
+    let exists = await this.prisma.coffeeType.findUnique({ where: { slug } });
+    let counter = 1;
+    while (exists) {
+      slug = `${this.toSlug(base)}-${counter}`;
+      exists = await this.prisma.coffeeType.findUnique({ where: { slug } });
+      counter++;
+    }
+    return slug;
+  }
+
   async create(dto: CreateCoffeeTypeDto) {
-    const slug = this.toSlug(dto.name);
+    const slug = await this.generateUniqueSlug(dto.name);
     const data: Record<string, unknown> = {
       name: dto.name, slug, origin: dto.origin, grade: dto.grade,
       description: dto.description, status: dto.status ?? Status.ACTIVE,
@@ -83,7 +95,7 @@ export class CoffeeTypesService {
     if (!ct) throw new NotFoundException('Coffee type not found');
 
     const data: Record<string, unknown> = {};
-    if (dto.name !== undefined) { data.name = dto.name; data.slug = this.toSlug(dto.name); }
+    if (dto.name !== undefined) { data.name = dto.name; data.slug = await this.generateUniqueSlug(dto.name); }
     if (dto.origin !== undefined) data.origin = dto.origin;
     if (dto.grade !== undefined) data.grade = dto.grade;
     if (dto.description !== undefined) data.description = dto.description;

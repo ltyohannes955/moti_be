@@ -1,6 +1,6 @@
 import { IsString, IsOptional, IsEnum, MinLength, IsArray, IsInt } from 'class-validator';
-import { Type } from 'class-transformer';
-import { Status, ProcessingMethod, AcidityLevel, BodyLevel, HarvestMonth } from '../../../generated/prisma/client';
+import { Transform } from 'class-transformer';
+import { Status, ProcessingMethod, AcidityLevel, BodyLevel, HarvestMonth, TastingNote } from '../../../generated/prisma/client';
 
 export class UpdateCoffeeTypeDto {
   @IsOptional()
@@ -40,21 +40,35 @@ export class UpdateCoffeeTypeDto {
   @IsEnum(BodyLevel)
   body?: BodyLevel;
 
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') return value.split(',').map(s => s.trim());
+    return value;
+  })
   @IsOptional()
   @IsEnum(HarvestMonth, { each: true })
   @IsArray()
   harvestSeason?: HarvestMonth[];
 
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) return value.map(Number);
+    if (typeof value === 'string') return value.split(',').map(s => Number(s.trim()));
+    return value;
+  })
   @IsOptional()
   @IsInt({ each: true })
-  @Type(() => Number)
   @IsArray()
   gradeIds?: number[];
 
+  @Transform(({ value }) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'string') return value.split(',').map(s => s.trim());
+    return value;
+  })
   @IsOptional()
-  @IsString({ each: true })
+  @IsEnum(TastingNote, { each: true })
   @IsArray()
-  tastingNotes?: string[];
+  tastingNotes?: TastingNote[];
 
   @IsOptional()
   @IsString()

@@ -103,6 +103,64 @@ enum CoffeeGradeStatus {
   UNAVAILABLE
 }
 
+enum TastingNote {
+  JASMINE
+  LEMON
+  HONEY
+  DARK_CHOCOLATE
+  MILK_CHOCOLATE
+  COCOA_POWDER
+  CACAO_NIBS
+  FUDGE
+  BERGAMOT
+  BLUEBERRY
+  CARAMEL
+  CINNAMON
+  CITRUS
+  COCOA
+  EARTHY
+  FLORAL
+  FRUITY
+  NUTTY
+  SPICE
+  STONE_FRUIT
+  TEA
+  TOBACCO
+  VANILLA
+  WINE
+  ROASTED_NUTS
+  APRICOT
+  MOCHA
+  BALANCED
+  CLEAN
+  TROPICAL_FRUIT
+  BERRIES
+  CHERRY
+  PEACH
+  PLUM
+  ORANGE
+  GRAPE
+  LAVENDER
+  ROSE
+  MINT
+  CEDAR
+  SMOKY
+  MALT
+  MAPLE
+  TOFFEE
+  HAZELNUT
+  WALNUT
+  ALMOND
+  BLACK_TEA
+  GREEN_APPLE
+  RAISIN
+  SUGAR_CANE
+  BLACK_PEPPER
+  CLOVE
+  NUTMEG
+  GINGER
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -314,7 +372,7 @@ model CoffeeType {
   acidity       AcidityLevel?
   body          BodyLevel?
   harvestSeason HarvestMonth[]
-  tastingNotes  String[]
+  tastingNotes  TastingNote[] @default([])
   badgeText     String?
   status        Status            @default(ACTIVE)
   grades        CoffeeTypeGrade[]
