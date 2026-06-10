@@ -36,6 +36,10 @@ export class CoffeeTypesController {
   findActive(@Query() query: QueryCoffeeTypesDto) { return this.service.findAllActive(query); }
 
   @Public()
+  @Get('tasting-notes')
+  getTastingNotes() { return this.service.getTastingNotes(); }
+
+  @Public()
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) { return this.service.findOne(id); }
 

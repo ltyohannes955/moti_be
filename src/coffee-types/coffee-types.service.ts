@@ -4,11 +4,15 @@ import { CreateCoffeeTypeDto } from './dto/create-coffee-type.dto';
 import { UpdateCoffeeTypeDto } from './dto/update-coffee-type.dto';
 import { QueryCoffeeTypesDto } from './dto/query-coffee-types.dto';
 import { paginate, PaginatedResult } from '../common/interfaces/paginated-result.interface';
-import { Status } from '../../generated/prisma/client';
+import { Status, TastingNote } from '../../generated/prisma/client';
 
 @Injectable()
 export class CoffeeTypesService {
   constructor(private prisma: PrismaService) {}
+
+  getTastingNotes() {
+    return Object.values(TastingNote);
+  }
 
   private toSlug(name: string): string {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
